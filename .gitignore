@@ -1,0 +1,20 @@
+# build output
+.DS_Store
+build*/
+*.o
+
+# SkyRoads game data — freeware from Bluemoon Interactive, dropped in
+# locally by each user, never committed to this repo
+*.LZS
+*.lzs
+*.DAT
+*.dat
+*.SND
+*.snd
+*.REC
+*.rec
+*.EXE
+*.exe
+SKYROADS.CFG
+skyroads.cfg
+readme.txt
