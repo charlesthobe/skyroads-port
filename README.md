@@ -13,8 +13,7 @@ fixed-point physics, and pre-baked-perspective renderer of the original.
 
 Made as a love letter to Bluemoon Interactive and everyone who spent the
 90s bunny-hopping down neon roads in space. All game content is theirs;
-SkyRoads was released as freeware, and the readme that ships with it
-explicitly welcomes modification and reverse engineering.
+SkyRoads was released as freeware.
 
 ## How faithful is it?
 
