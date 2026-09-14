@@ -18,3 +18,18 @@ build*/
 SKYROADS.CFG
 skyroads.cfg
 readme.txt
+
+# IDE stuff:
+# Visual Studio
+.vs
+ipch
+ipch/*
+*.opensdf
+*.sdf
+*.suo
+*.vcxproj.user
+*.VC.opendb
+*.VC.db
+/.vscode/
+# CLion
+/.idea/
