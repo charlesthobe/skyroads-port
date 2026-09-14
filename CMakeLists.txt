@@ -112,11 +112,11 @@ if(SR_IOS)
 			XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO)
 	endif()
 	return()
+else()
+	add_executable(skyroads ${CORE_SRC} src/platform/sdl/main_sdl.c)
 endif()
 
 # ----------------------------------------------------------- web (emcc) ----
-add_executable(skyroads ${CORE_SRC} src/platform/sdl/main_sdl.c)
-
 if(EMSCRIPTEN)
 	set(PRELOAD "")
 	foreach(f ${DATA_FILES})
