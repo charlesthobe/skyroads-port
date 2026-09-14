@@ -48,6 +48,10 @@ int main(int argc, char **argv)
     rms = __builtin_sqrt(rms / (frames * 2));
     printf("song %d: rms=%.1f peak=%d\n", song, rms, peak);
 
+    if (mkdir("/tmp/srdump", 0766) == -1 && errno != EEXIST) {
+        printf("Failed to create temp directory \"/tmp/srdump\"\n");
+        return -1;
+    }
     FILE *f = fopen("/tmp/srdump/song.wav", "wb");
     uint32_t dlen = (uint32_t)frames * 4, flen = dlen + 36;
     fwrite("RIFF", 1, 4, f); fwrite(&flen, 4, 1, f); fwrite("WAVEfmt ", 1, 8, f);
