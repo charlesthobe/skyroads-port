@@ -2,7 +2,7 @@
  * Renders the core's 320x200 8bpp framebuffer through a streaming texture
  * with aspect-correct integer-ish scaling, and drives exact 36.0036 Hz
  * ticks from a rational accumulator. */
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
