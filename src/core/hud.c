@@ -48,12 +48,12 @@ static void draw_cells(sr_fb *fb, const uint8_t *pristine, uint16_t ofs,
 
 static void draw_digit(sr_fb *fb, int x, int y, int d)
 {
-	for (int j = 0; j < 5; j++)
-		for (int i = 0; i < 4; i++) {
-			uint8_t v = sr_digits[d][j * 4 + i];
-			if (!v)
-				continue;
-			fb->px[(y + j) * 320 + x + i] = v == 1 ? 0x61 : 0x62;
+	for (int i = 0; i < 5; i++)
+		for (int j = 0; j < 4; j++) {
+			uint8_t v = sr_digits[d][i * 4 + j];
+			if (!v) {
+				fb->px[(y + i) * 320 + x + j] = 0x0;
+			}
 		}
 }
 
@@ -114,17 +114,10 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 					fb->px[(156 + j) * 320 + 203 + i] = 0x62;
 			}
 	}
-	/* GRAV-O-METER: 4 digits at (0x60,0x9c), value (g-3)*100, leading-zero
-	 * suppression */
+	// GRAV-O-METER: 1 digit at (0x65,0x9c), (value = gravity - 3), and 2 prerendered zeros from the HUD.
 	{
-		int value = ((int)p->road->gravity - 3) * 100;
-		if (value < 0) value = 0;
-		static const int div[4] = { 1, 10, 100, 1000 };
-		for (int si = 0; si < 4; si++) {
-			int d = (value / div[si]) % 10;
-			draw_digit(fb, 0x60 + (3 - si) * 5, 0x9c, d);
-			if (value / div[si] / 10 == 0)
-				break;						/* leading-zero stop */
-		}
+		int value = ((int)p->road->gravity - 3);
+		if (value < 0 || value > 9) value = 0;
+		draw_digit(fb, 0x65, 0x9c, value);
 	}
 }
