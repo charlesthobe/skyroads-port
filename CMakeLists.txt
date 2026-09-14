@@ -154,6 +154,9 @@ add_executable(sr_demo_test  src/core/lzs.c src/core/assets.c src/core/play.c
                              src/tools/demo_test.c)
 add_executable(sr_music_test src/core/lzs.c src/core/assets.c src/core/audio.c
                              src/thirdparty/opl3.c src/tools/music_test.c)
+if(LINUX)
+  target_link_libraries(sr_music_test PRIVATE m)
+endif()
 
 enable_testing()
 add_test(NAME demo_playback COMMAND sr_demo_test ${CMAKE_SOURCE_DIR})
