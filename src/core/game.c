@@ -324,7 +324,7 @@ static void tick_game(sr_game *g, const sr_input *in)
 
 	sr_render_frame(&g->render, &g->fb, &g->assets, &g->play,
 					g->tick, g->play.on_sticky);
-	sr_hud_draw(&g->fb, &g->assets, g->render.pristine, &g->play, g->tick);
+	sr_hud_draw(&g->fb, &g->assets, g->render.pristine, &g->play);
 	memcpy(g->cur_pal, g->assets.game_pal, sizeof g->cur_pal);
 
 	if (res == SR_RES_RUNNING)

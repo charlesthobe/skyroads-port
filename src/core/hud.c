@@ -57,8 +57,7 @@ static void draw_digit(sr_fb *fb, int x, int y, int d)
 		}
 }
 
-void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine,
-				 const sr_play *p, uint32_t tick)
+void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const sr_play *p)
 {
 	/* speedometer: 34 segments, displayed speed excludes autopilot delta */
 	int32_t disp = p->speed - p->ap_delta;
@@ -128,5 +127,4 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine,
 				break;						/* leading-zero stop */
 		}
 	}
-	(void)tick;
 }

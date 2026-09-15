@@ -317,8 +317,10 @@ void sr_audio_render(sr_audio *a, int16_t *stereo, int frames)
 				a->sfx_pos_fp += a->sfx_step_fp;
 			}
 		}
-		if (l > 32767) l = 32767; if (l < -32768) l = -32768;
-		if (r > 32767) r = 32767; if (r < -32768) r = -32768;
+		if (l > 32767) l = 32767;
+		if (l < -32768) l = -32768;
+		if (r > 32767) r = 32767;
+		if (r < -32768) r = -32768;
 		stereo[i*2] = (int16_t)l;
 		stereo[i*2+1] = (int16_t)r;
 	}
