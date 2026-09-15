@@ -106,12 +106,16 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 	}
 	/* jump-o-master light: 26x5 at (203,156) */
 	{
+		// Apparently sr_aplight[0] just says "IDLE" which is the same as the "pristine" HUD, nonetheless we let it be used for now at least.
 		const uint8_t *st = sr_aplight[p->ap_light ? 1 : 0];
-		for (int j = 0; j < 5; j++)
-			for (int i = 0; i < 26; i++) {
-				uint8_t v = st[j * 26 + i];
-				if (v)
-					fb->px[(156 + j) * 320 + 203 + i] = 0x62;
+		for (int i = 0; i < 5; i++)
+			for (int j = 0; j < 26; j++) {
+				uint8_t v = st[i * 26 + j];
+				if (!v) {
+					fb->px[(156 + i) * 320 + 203 + j] = 0;
+				} else {
+					fb->px[(156 + i) * 320 + 203 + j] = 0x62;
+				}
 			}
 	}
 	// GRAV-O-METER: 1 digit at (0x65,0x9c), (value = gravity - 3), and 2 prerendered zeros from the HUD.
