@@ -295,9 +295,9 @@ static void draw_shadow(sr_fb *fb, int left, int top, int clearance)
 	if (map < 0 || map >= 5)
 		return;
 	const uint8_t *stencil = sr_shadow[map];
-	for (int j = 0; j < 29; j++)
-		for (int i = 0; i < 9; i++) {
-			if (!stencil[j * 9 + i])
+	for (int i = 0; i < 9; i++)
+		for (int j = 0; j < 29; j++) {
+			if (!stencil[i * 29 + j])
 				continue;
 			int x = left + j, y = top + i;
 			if (x < 0 || x >= 320 || cowl_hidden(x, y))
