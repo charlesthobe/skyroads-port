@@ -144,14 +144,16 @@ static void draw_gomenu(sr_game *g)
 			}
 		}
 	}
-	/* selection highlight: brighten the 48x9 road-name area */
+	/* selection highlight: white rectangle around the 48x9 road-name area */
 	int ofs = gomenu_road_ofs(g->go_sel);
 	int x0 = ofs % 320, y0 = ofs / 320;
-	for (int y = y0; y < y0 + 9 && y < SR_SCREEN_H; y++)
-		for (int x = x0; x < x0 + 48 && x < SR_SCREEN_W; x++) {
-			uint8_t *p = &g->fb.px[y * 320 + x];
-			if (*p >= 0x63)
-				*p = (uint8_t)(240 + (*p & 7));
+	int x_max = x0 + 48;
+	int y_max = y0 + 9;
+	for (int y = y0; y < y_max; y++)
+		for (int x = x0; x < x_max; x++) {
+			if (x > x0 && x < x_max - 1 && y > y0 && y < y_max - 1)
+				continue;
+			g->fb.px[y * 320 + x] = 0x1;
 		}
 	memset(g->cur_pal, 0, sizeof g->cur_pal);
 	sr_gfx_apply_pal(&g->assets.gomenu, g->cur_pal);
