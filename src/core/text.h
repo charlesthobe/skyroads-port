@@ -9,6 +9,6 @@
 #include "gfx.h"
 
 void sr_text(sr_fb *fb, int x, int y, const char *s, uint8_t color);
-int  sr_text_width(const char *s);
+int sr_text_width(const char *s);
 
 #endif
