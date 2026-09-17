@@ -33,3 +33,6 @@ ipch/*
 /.vscode/
 # CLion
 /.idea/
+
+# Python annoyances
+**/__pycache__
