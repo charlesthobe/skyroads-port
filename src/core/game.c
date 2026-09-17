@@ -363,7 +363,7 @@ static void tick_game(sr_game *g, const sr_input *in)
 		g->roadend_final = (rd == 29 && done == 30);
 		if (g->go_sel < 29)
 			g->go_sel++;
-		/* fn_2b21: text over the final frame, wait for a key */
+		/* fn_2b21: text over the final frame */
 		sr_text(&g->fb, g->roadend_final ? 0x84 : 0x68, 0x50,
 				g->roadend_final ? "The End" : "Road Completed", 0x63);
 		g->state = SR_ST_ROADEND;
@@ -375,9 +375,13 @@ static void tick_game(sr_game *g, const sr_input *in)
 
 static void tick_roadend(sr_game *g, const sr_input *in)
 {
-	if (any_pressed(in))
-		fade_to(g, g->roadend_final ? SR_ST_MAINMENU : SR_ST_GOMENU);
-	/* keep the completed frame + text on screen */
+	static int counter = 0;
+	if (counter < 36) {
+		counter++;
+		return;
+	}
+	counter = 0;
+	fade_to(g, g->roadend_final ? SR_ST_MAINMENU : SR_ST_GOMENU);
 }
 
 /* ------------------------------------------------------------- main tick */
