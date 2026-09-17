@@ -90,7 +90,7 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 		draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells,
 					0x5e, 0x5f, i < ful_segs);
 	}
-	/* progress bar: 30 columns at x=0x2a.., slot height probed from art */
+	/* progress bar: 30 columns at x=0x2a.., a slot is 6 pixels at its thickest */
 	int rows = p->road->rows;
 	int steps = 0;
 	if (rows > 3) {
@@ -102,12 +102,14 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 	if (steps > 29) steps = 29;
 	for (int i = 0; i < steps; i++) {
 		int x = 0x2a + i;
-		int y = 143;
-		uint8_t slot = pristine[y * 320 + x];
+		int y = 140;
+		uint8_t slot_color = 0x65;
 		int yy = y;
-		while (yy >= 138 && pristine[yy * 320 + x] == slot) {
-			fb->px[yy * 320 + x] = 0x60;
-			yy--;
+		while (yy <= y + 6) {
+			if (pristine[yy * 320 + x] == slot_color) {
+				fb->px[yy * 320 + x] = 0x60;
+			}
+			yy++;
 		}
 	}
 	/* jump-o-master light: 26x5 at (203,156) */
