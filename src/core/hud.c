@@ -46,19 +46,25 @@ static void draw_cells(sr_fb *fb, const uint8_t *pristine, uint16_t ofs,
 		}
 }
 
-static void draw_digit(sr_fb *fb, int x, int y, int d)
-{
-	for (int i = 0; i < 5; i++)
+static void draw_digit(sr_fb *fb, int x, int y, int digit) {
+	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 4; j++) {
-			uint8_t v = sr_digits[d][i * 4 + j];
-			if (!v) {
-				fb->px[(y + i) * 320 + x + j] = 0x0;
+			uint8_t v = sr_digits[digit][i * 4 + j];
+			switch (v) {
+				case 0:
+					fb->px[(y + i) * 320 + x + j] = 0;
+					break;
+				case 1:
+					fb->px[(y + i) * 320 + x + j] = 0x61;
+					break;
+				case 2:
+					fb->px[(y + i) * 320 + x + j] = 0x62;
 			}
 		}
+	}
 }
 
-void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const sr_play *p)
-{
+void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const sr_play *p) {
 	/* speedometer: 34 segments, displayed speed excludes autopilot delta */
 	int32_t disp = p->speed - p->ap_delta;
 	if (disp < 0) disp = 0;
@@ -111,17 +117,31 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 		for (int i = 0; i < 5; i++)
 			for (int j = 0; j < 26; j++) {
 				uint8_t v = st[i * 26 + j];
-				if (!v) {
-					fb->px[(156 + i) * 320 + 203 + j] = 0;
-				} else {
-					fb->px[(156 + i) * 320 + 203 + j] = 0x62;
+				switch (v) {
+					case 0:
+						fb->px[(156 + i) * 320 + 203 + j] = 0;
+						break;
+					case 5:
+						fb->px[(156 + i) * 320 + 203 + j] = 0x61;
+						break;
+					case 6:
+						fb->px[(156 + i) * 320 + 203 + j] = 0x62;
 				}
 			}
 	}
-	// GRAV-O-METER: 1 digit at (0x65,0x9c), (value = gravity - 3), and 2 prerendered zeros from the HUD.
+	// GRAV-O-METER: 1 digit at (0x65 + 5,0x9c), (value = gravity - 3), and 2 prerendered zeros from the HUD.
+	// Technically can handle 2 digits although this never happens in the original game.
 	{
 		int value = ((int)p->road->gravity - 3);
-		if (value < 0 || value > 9) value = 0;
-		draw_digit(fb, 0x65, 0x9c, value);
+		if (value < 0 || value > 99) {
+			value = 0;
+		}
+		int decimal_place = 0;
+		while (value > 0) {
+			int digit = value % 10;
+			value = value / 10;
+			draw_digit(fb, 0x65 - (5 * decimal_place), 0x9c, digit);
+			decimal_place++;
+		}
 	}
 }
