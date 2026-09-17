@@ -195,48 +195,48 @@ static void pump_events(app_t *a)
 	SDL_Event e;
 	while (SDL_PollEvent(&e)) {
 		switch (e.type) {
-		case SDL_QUIT:
-			a->quit = true;
-			break;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
-			if (e.key.repeat)
+			case SDL_QUIT:
+				a->quit = true;
 				break;
-			for (size_t i = 0; i < sizeof keymap / sizeof *keymap; i++)
-				if (e.key.keysym.scancode == keymap[i].sc) {
-					a->input.held[keymap[i].key] = (e.type == SDL_KEYDOWN);
-					if (e.type == SDL_KEYDOWN)
-						a->input.pressed[keymap[i].key] = 1;
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+				if (e.key.repeat)
+					break;
+				for (size_t i = 0; i < sizeof keymap / sizeof *keymap; i++)
+					if (e.key.keysym.scancode == keymap[i].sc) {
+						a->input.held[keymap[i].key] = (e.type == SDL_KEYDOWN);
+						if (e.type == SDL_KEYDOWN)
+							a->input.pressed[keymap[i].key] = 1;
+					}
+				break;
+			case SDL_FINGERDOWN:
+				/* edge-trigger: menu navigation, ESC/pause, demo-exit taps */
+				touch_classify(a, e.tfinger.x, e.tfinger.y, a->touch.pressed);
+				break;
+			/* real mouse mirrors one finger for desktop testing (touch-derived
+			 * synthetic mouse events are disabled via SDL hint) */
+			case SDL_MOUSEBUTTONDOWN:
+				if (e.button.which != SDL_TOUCH_MOUSEID) {
+					int w, h;
+					SDL_GetWindowSize(a->win, &w, &h);
+					a->mouse_down = true;
+					a->mouse_x = (float)e.button.x / (w ? w : 1);
+					a->mouse_y = (float)e.button.y / (h ? h : 1);
+					touch_classify(a, a->mouse_x, a->mouse_y, a->touch.pressed);
 				}
-			break;
-		case SDL_FINGERDOWN:
-			/* edge-trigger: menu navigation, ESC/pause, demo-exit taps */
-			touch_classify(a, e.tfinger.x, e.tfinger.y, a->touch.pressed);
-			break;
-		/* real mouse mirrors one finger for desktop testing (touch-derived
-		 * synthetic mouse events are disabled via SDL hint) */
-		case SDL_MOUSEBUTTONDOWN:
-			if (e.button.which != SDL_TOUCH_MOUSEID) {
-				int w, h;
-				SDL_GetWindowSize(a->win, &w, &h);
-				a->mouse_down = true;
-				a->mouse_x = (float)e.button.x / (w ? w : 1);
-				a->mouse_y = (float)e.button.y / (h ? h : 1);
-				touch_classify(a, a->mouse_x, a->mouse_y, a->touch.pressed);
-			}
-			break;
-		case SDL_MOUSEMOTION:
-			if (a->mouse_down && e.motion.which != SDL_TOUCH_MOUSEID) {
-				int w, h;
-				SDL_GetWindowSize(a->win, &w, &h);
-				a->mouse_x = (float)e.motion.x / (w ? w : 1);
-				a->mouse_y = (float)e.motion.y / (h ? h : 1);
-			}
-			break;
-		case SDL_MOUSEBUTTONUP:
-			if (e.button.which != SDL_TOUCH_MOUSEID)
-				a->mouse_down = false;
-			break;
+				break;
+			case SDL_MOUSEMOTION:
+				if (a->mouse_down && e.motion.which != SDL_TOUCH_MOUSEID) {
+					int w, h;
+					SDL_GetWindowSize(a->win, &w, &h);
+					a->mouse_x = (float)e.motion.x / (w ? w : 1);
+					a->mouse_y = (float)e.motion.y / (h ? h : 1);
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				if (e.button.which != SDL_TOUCH_MOUSEID)
+					a->mouse_down = false;
+				break;
 		}
 	}
 	touch_update_held(a);
@@ -278,10 +278,10 @@ static void chevron(SDL_Renderer *r, int cx, int cy, int s, int dir, Uint8 a)
 	SDL_Color c = { 255, 255, 255, a };
 	SDL_FPoint p[3];
 	switch (dir) {
-	case 0: p[0]=(SDL_FPoint){cx,cy-s}; p[1]=(SDL_FPoint){cx-s,cy+s}; p[2]=(SDL_FPoint){cx+s,cy+s}; break;
-	case 1: p[0]=(SDL_FPoint){cx,cy+s}; p[1]=(SDL_FPoint){cx-s,cy-s}; p[2]=(SDL_FPoint){cx+s,cy-s}; break;
-	case 2: p[0]=(SDL_FPoint){cx-s,cy}; p[1]=(SDL_FPoint){cx+s,cy-s}; p[2]=(SDL_FPoint){cx+s,cy+s}; break;
-	default:p[0]=(SDL_FPoint){cx+s,cy}; p[1]=(SDL_FPoint){cx-s,cy-s}; p[2]=(SDL_FPoint){cx-s,cy+s}; break;
+		case 0: p[0]=(SDL_FPoint){cx,cy-s}; p[1]=(SDL_FPoint){cx-s,cy+s}; p[2]=(SDL_FPoint){cx+s,cy+s}; break;
+		case 1: p[0]=(SDL_FPoint){cx,cy+s}; p[1]=(SDL_FPoint){cx-s,cy-s}; p[2]=(SDL_FPoint){cx+s,cy-s}; break;
+		case 2: p[0]=(SDL_FPoint){cx-s,cy}; p[1]=(SDL_FPoint){cx+s,cy-s}; p[2]=(SDL_FPoint){cx+s,cy+s}; break;
+		default:p[0]=(SDL_FPoint){cx+s,cy}; p[1]=(SDL_FPoint){cx-s,cy-s}; p[2]=(SDL_FPoint){cx-s,cy+s}; break;
 	}
 	for (int i = 0; i < 3; i++) { v[i].position = p[i]; v[i].color = c; v[i].tex_coord=(SDL_FPoint){0,0}; }
 	SDL_RenderGeometry(r, NULL, v, 3, NULL, 0);

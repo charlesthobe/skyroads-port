@@ -39,13 +39,13 @@ static void *io_read_file(const char *name, size_t *out_size)
 static const char *resname(int r)
 {
 	switch (r) {
-	case SR_RES_COMPLETE: return "COMPLETE";
-	case SR_RES_WALL: return "WALL CRASH";
-	case SR_RES_BURNED: return "BURNED";
-	case SR_RES_FELL: return "FELL OFF";
-	case SR_RES_NO_FUEL: return "OUT OF FUEL";
-	case SR_RES_NO_OXYGEN: return "OUT OF OXYGEN";
-	default: return "?";
+		case SR_RES_COMPLETE: return "COMPLETE";
+		case SR_RES_WALL: return "WALL CRASH";
+		case SR_RES_BURNED: return "BURNED";
+		case SR_RES_FELL: return "FELL OFF";
+		case SR_RES_NO_FUEL: return "OUT OF FUEL";
+		case SR_RES_NO_OXYGEN: return "OUT OF OXYGEN";
+		default: return "?";
 	}
 }
 

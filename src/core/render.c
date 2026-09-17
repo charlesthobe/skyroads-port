@@ -253,13 +253,13 @@ static void compose_tun_high(compctx *cc)	 /* 0x2fb0 */
 static void compose_tile(compctx *cc)
 {
 	switch (shape(cc->tile)) {
-	case 0: compose_floor(cc); break;
-	case 1: compose_tunnel(cc); break;
-	case 2: compose_lowblock(cc); break;
-	case 3: compose_tun_low(cc); break;
-	case 4: compose_highblock(cc); break;
-	case 5: compose_tun_high(cc); break;
-	default: break;							/* 6..15: nothing */
+		case 0: compose_floor(cc); break;
+		case 1: compose_tunnel(cc); break;
+		case 2: compose_lowblock(cc); break;
+		case 3: compose_tun_low(cc); break;
+		case 4: compose_highblock(cc); break;
+		case 5: compose_tun_high(cc); break;
+		default: break;							/* 6..15: nothing */
 	}
 }
 

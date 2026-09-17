@@ -53,18 +53,18 @@ static int solid_block(uint16_t tile, int16_t t, uint16_t y)
 	 * huge row index (=> not inside tunnels, but >= inner for bores) */
 	uint16_t di = (uint16_t)(y + 0xde00) / 0x80;
 	switch (tile & 0xf00) {
-	case 0x100:	/* tunnel */
-		return di >= sr_tun_inner[t] && di < sr_tun_outer[t];
-	case 0x200:	/* half block */
-		return y < 0x3200;
-	case 0x300:	/* half block with bore */
-		return y < 0x3200 && di >= sr_tun_inner[t];
-	case 0x400:	/* full block */
-		return y < 0x3c00;
-	case 0x500:	/* full block with bore */
-		return y < 0x3c00 && di >= sr_tun_inner[t];
-	default:
-		return 0;
+		case 0x100:	/* tunnel */
+			return di >= sr_tun_inner[t] && di < sr_tun_outer[t];
+		case 0x200:	/* half block */
+			return y < 0x3200;
+		case 0x300:	/* half block with bore */
+			return y < 0x3200 && di >= sr_tun_inner[t];
+		case 0x400:	/* full block */
+			return y < 0x3c00;
+		case 0x500:	/* full block with bore */
+			return y < 0x3c00 && di >= sr_tun_inner[t];
+		default:
+			return 0;
 	}
 }
 
@@ -277,32 +277,32 @@ static int sfx_busy(const sr_play *p)			/* fn_0476, SB path */
 static void surface_effects(sr_play *p, uint16_t code)
 {
 	switch (code & 0xf) {
-	case 0x2:									/* sticky (0x1b0d) */
-		if (p->expl_ctr == 0)
-			p->speed -= 0x12f;
-		break;
-	case 0x9:									/* supplies (0x1ad6) */
-		if (p->end_state == 0) {
-			if (p->fuel < 0x6978 || p->oxy < 0x6978)
-				sfx(p, 4);
-			p->fuel = 0x7530;
-			p->oxy = 0x7530;
-		}
-		break;
-	case 0xa:									/* boost (0x1b25) */
-		if (p->expl_ctr == 0)
-			p->speed += 0x12f;
-		break;
-	case 0xc:									/* burning (0x1aab) */
-		if (p->end_state == 0)
-			p->end_state = 2;
-		if (p->expl_ctr == 0) {
-			p->expl_ctr = 1;
-			sfx(p, 0);
-		}
-		break;
-	default:
-		break;
+		case 0x2:									/* sticky (0x1b0d) */
+			if (p->expl_ctr == 0)
+				p->speed -= 0x12f;
+			break;
+		case 0x9:									/* supplies (0x1ad6) */
+			if (p->end_state == 0) {
+				if (p->fuel < 0x6978 || p->oxy < 0x6978)
+					sfx(p, 4);
+				p->fuel = 0x7530;
+				p->oxy = 0x7530;
+			}
+			break;
+		case 0xa:									/* boost (0x1b25) */
+			if (p->expl_ctr == 0)
+				p->speed += 0x12f;
+			break;
+		case 0xc:									/* burning (0x1aab) */
+			if (p->end_state == 0)
+				p->end_state = 2;
+			if (p->expl_ctr == 0) {
+				p->expl_ctr = 1;
+				sfx(p, 0);
+			}
+			break;
+		default:
+			break;
 	}
 	if (p->speed < 0) p->speed = 0;
 	if (p->speed > 0x2aaa) p->speed = 0x2aaa;

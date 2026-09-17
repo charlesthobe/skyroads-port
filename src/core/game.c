@@ -64,22 +64,22 @@ static void enter_state(sr_game *g, sr_state st)
 	g->state = st;
 	g->idle_ticks = 0;
 	switch (st) {
-	case SR_ST_GAME:
-		if (g->demo_mode == 2)		/* queued attract demo */
-			start_road(g, 0, 1);
-		else if (g->road_entry)
-			start_road(g, g->road_entry, 0);
-		break;
-	case SR_ST_MAINMENU:
-		g->want_song = 0;
-		g->demo_mode = 0;
-		break;
-	case SR_ST_GOMENU:
-		g->want_song = 1;
-		g->demo_mode = 0;
-		break;
-	default:
-		break;
+		case SR_ST_GAME:
+			if (g->demo_mode == 2)		/* queued attract demo */
+				start_road(g, 0, 1);
+			else if (g->road_entry)
+				start_road(g, g->road_entry, 0);
+			break;
+		case SR_ST_MAINMENU:
+			g->want_song = 0;
+			g->demo_mode = 0;
+			break;
+		case SR_ST_GOMENU:
+			g->want_song = 1;
+			g->demo_mode = 0;
+			break;
+		default:
+			break;
 	}
 }
 
@@ -406,12 +406,12 @@ static void game_tick_inner(sr_game *g, const sr_input *in)
 			/* render the new state once so the fade-in has pixels */
 			sr_input none = { 0 };
 			switch (g->state) {
-			case SR_ST_MAINMENU: draw_mainmenu(g); break;
-			case SR_ST_GOMENU:	draw_gomenu(g);	break;
-			case SR_ST_SETMENU: tick_setmenu(g, &none); break;
-			case SR_ST_HELP:	 tick_help(g, &none);	break;
-			case SR_ST_GAME:	 tick_game(g, &none);	break;
-			default: break;
+				case SR_ST_MAINMENU: draw_mainmenu(g); break;
+				case SR_ST_GOMENU:	draw_gomenu(g);	break;
+				case SR_ST_SETMENU: tick_setmenu(g, &none); break;
+				case SR_ST_HELP:	 tick_help(g, &none);	break;
+				case SR_ST_GAME:	 tick_game(g, &none);	break;
+				default: break;
 			}
 		}
 		return;
@@ -424,14 +424,14 @@ static void game_tick_inner(sr_game *g, const sr_input *in)
 	}
 
 	switch (g->state) {
-	case SR_ST_INTRO:	tick_intro(g, in);	break;
-	case SR_ST_MAINMENU: tick_mainmenu(g, in); break;
-	case SR_ST_GOMENU:	tick_gomenu(g, in);	break;
-	case SR_ST_HELP:	 tick_help(g, in);	 break;
-	case SR_ST_GAME:	 tick_game(g, in);	 break;
-	case SR_ST_SETMENU: tick_setmenu(g, in); break;
-	case SR_ST_ROADEND: tick_roadend(g, in); break;
-	case SR_ST_QUIT:	 break;
+		case SR_ST_INTRO:	tick_intro(g, in);	break;
+		case SR_ST_MAINMENU: tick_mainmenu(g, in); break;
+		case SR_ST_GOMENU:	tick_gomenu(g, in);	break;
+		case SR_ST_HELP:	 tick_help(g, in);	 break;
+		case SR_ST_GAME:	 tick_game(g, in);	 break;
+		case SR_ST_SETMENU: tick_setmenu(g, in); break;
+		case SR_ST_ROADEND: tick_roadend(g, in); break;
+		case SR_ST_QUIT:	 break;
 	}
 }
 
@@ -440,9 +440,9 @@ static void apply_fade(sr_game *g)
 {
 	int t;
 	switch (g->fade) {
-	case SR_FADE_IN: t = g->fade_t; break;
-	case SR_FADE_OUT: t = g->fade_t; break;
-	default:		 t = 36; break;
+		case SR_FADE_IN: t = g->fade_t; break;
+		case SR_FADE_OUT: t = g->fade_t; break;
+		default:		 t = 36; break;
 	}
 	int pct = t * 100 / 36;
 	for (int i = 0; i < 256; i++) {

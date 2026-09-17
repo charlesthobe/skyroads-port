@@ -168,17 +168,17 @@ static void music_tick(sr_audio *a)
 		int ch = (w >> 4) & 0xf;
 		int param = w >> 8;
 		switch (op) {
-		case 0: a->delay = (uint8_t)param; return;
-		case 1:
-			if (ch < 11)
-				program_instr(a, ch, param, a->instr + param * 16);
-			break;
-		case 2: if (ch < 11) note_on(a, ch, param); break;
-		case 3: if (ch < 11) key_off(a, ch); break;
-		case 4: if (ch < 11) set_volume(a, ch, param); break;
-		case 5: a->ev = a->loop; break;
-		case 6: a->loop = a->ev; break;
-		case 7: break;						/* sync flag, unused */
+			case 0: a->delay = (uint8_t)param; return;
+			case 1:
+				if (ch < 11)
+					program_instr(a, ch, param, a->instr + param * 16);
+				break;
+			case 2: if (ch < 11) note_on(a, ch, param); break;
+			case 3: if (ch < 11) key_off(a, ch); break;
+			case 4: if (ch < 11) set_volume(a, ch, param); break;
+			case 5: a->ev = a->loop; break;
+			case 6: a->loop = a->ev; break;
+			case 7: break;						/* sync flag, unused */
 		}
 	}
 }
