@@ -258,8 +258,23 @@ static void tick_setmenu(sr_game *g, const sr_input *in)
 	sr_fb_clear(&g->fb, 0);
 	if (g->assets.setmenu.n_picts > 0)
 		sr_blit_pict(&g->fb, &g->assets.setmenu.picts[0], true);
-	if (1 + *sel < g->assets.setmenu.n_picts)
-		sr_blit_pict(&g->fb, &g->assets.setmenu.picts[1 + *sel], false);
+	switch (g->cfg.control) {
+		case 0:
+			sr_blit_pict(&g->fb, &g->assets.setmenu.picts[6], false);
+			break;
+		case 1:
+			sr_blit_pict(&g->fb, &g->assets.setmenu.picts[7], false);
+			break;
+		case 2:
+			sr_blit_pict(&g->fb, &g->assets.setmenu.picts[8], false);
+	}
+	if (g->cfg.sound_off) {
+		sr_blit_pict(&g->fb, &g->assets.setmenu.picts[10], false);
+	} else {
+		sr_blit_pict(&g->fb, &g->assets.setmenu.picts[9], false);
+	}
+	if (*sel < g->assets.setmenu.n_picts)
+		sr_blit_pict(&g->fb, &g->assets.setmenu.picts[*sel + 1], false);
 	memset(g->cur_pal, 0, sizeof g->cur_pal);
 	sr_gfx_apply_pal(&g->assets.setmenu, g->cur_pal);
 }
