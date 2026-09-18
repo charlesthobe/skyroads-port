@@ -305,7 +305,8 @@ void sr_audio_render(sr_audio *a, int16_t *stereo, int frames)
 		a->tick_acc--;
 		int16_t buf[2];
 		OPL3_GenerateResampled(&a->chip, buf);
-		int32_t l = buf[0] * 2, r = buf[1] * 2;
+		float vol_modifier = 1;
+		int32_t l = buf[0] * vol_modifier, r = buf[1] * vol_modifier;
 		if (a->sfx_data) {
 			uint32_t pos = a->sfx_pos_fp >> 16;
 			if (pos >= a->sfx_len) {
