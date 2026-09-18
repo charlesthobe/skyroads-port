@@ -8,17 +8,7 @@
 
 /* ------------------------------------------------------------------ init */
 
-bool sr_game_init(sr_game *g, sr_io io, char *err, size_t errlen)
-{
-	memset(g, 0, sizeof *g);
-	if (!sr_assets_load(&g->assets, io, err, errlen))
-		return false;
-	if (!sr_render_init(&g->render, &g->assets))
-		return false;
-	sr_cfg_load(&g->cfg, &g->assets.io);
-	/* boot into the intro (fn_4575): black -> ANIM palette + title pict,
-	 * fade in, sound, animation */
-	g->state = SR_ST_INTRO;
+static void start_intro(sr_game *g) {
 	g->want_song = 0;
 	g->fade = SR_FADE_IN;
 	g->fade_t = 0;
@@ -28,6 +18,19 @@ bool sr_game_init(sr_game *g, sr_io io, char *err, size_t errlen)
 	memset(g->cur_pal, 0, sizeof g->cur_pal);
 	for (int i = 0; i < g->assets.anim_pal.count && i < 256; i++)
 		g->cur_pal[g->assets.anim_pal.base + i] = g->assets.anim_pal.colors[i];
+}
+
+bool sr_game_init(sr_game *g, sr_io io, char *err, size_t errlen) {
+	memset(g, 0, sizeof *g);
+	if (!sr_assets_load(&g->assets, io, err, errlen))
+		return false;
+	if (!sr_render_init(&g->render, &g->assets))
+		return false;
+	sr_cfg_load(&g->cfg, &g->assets.io);
+	/* boot into the intro (fn_4575): black -> ANIM palette + title pict,
+	 * fade in, sound, animation */
+	g->state = SR_ST_INTRO;
+	start_intro(g);
 	return true;
 }
 
@@ -70,6 +73,9 @@ static void enter_state(sr_game *g, sr_state st)
 	g->state = st;
 	g->idle_ticks = 0;
 	switch (st) {
+		case SR_ST_INTRO:
+			start_intro(g);
+			break;
 		case SR_ST_GAME:
 		case SR_ST_DIED:
 			if (g->demo_mode == 2)		/* queued attract demo */
@@ -86,7 +92,7 @@ static void enter_state(sr_game *g, sr_state st)
 			g->demo_mode = 0;
 			break;
 		default:
-			break;
+			;
 	}
 }
 
@@ -346,23 +352,22 @@ static void tick_game(sr_game *g, const sr_input *in)
 	if (res == SR_RES_RUNNING)
 		return;
 
-	if (g->demo_mode) {
-		fade_to(g, SR_ST_MAINMENU);
-		return;
-	}
 	if (res == SR_RES_COMPLETE) {
-		int rd = g->road_entry - 1;
-		if (rd >= 0 && rd < 30 && g->cfg.completions[rd] < 0xffff)
-			g->cfg.completions[rd]++;
-		sr_cfg_save(&g->cfg, &g->assets.io);
-		int done = 0;
-		for (int i = 0; i < 30; i++)
-			if (g->cfg.completions[i])
-				done++;
-		g->roadend_final = (rd == 29 && done == 30);
-		if (g->go_sel < 29)
-			g->go_sel++;
-		/* fn_2b21: text over the final frame */
+		g->roadend_final = false;
+		if (!g->demo_mode) {
+			int rd = g->road_entry - 1;
+			if (rd >= 0 && rd < 30 && g->cfg.completions[rd] < 0xffff)
+				g->cfg.completions[rd]++;
+			sr_cfg_save(&g->cfg, &g->assets.io);
+			int done = 0;
+			for (int i = 0; i < 30; i++)
+				if (g->cfg.completions[i])
+					done++;
+			g->roadend_final = (rd == 29 && done == 30);
+			if (g->go_sel < 29)
+				g->go_sel++;
+			/* fn_2b21: text over the final frame */
+		}
 		sr_text(&g->fb, g->roadend_final ? 0x84 : 0x68, 0x50,
 				g->roadend_final ? "The End" : "Road Completed", 0x63);
 		g->state = SR_ST_ROADEND;
@@ -380,6 +385,10 @@ static void tick_roadend(sr_game *g)
 		return;
 	}
 	counter = 0;
+	if (g->demo_mode) {
+		fade_to(g, SR_ST_INTRO);
+		return;
+	}
 	fade_to(g, g->roadend_final ? SR_ST_MAINMENU : SR_ST_GOMENU);
 }
 
