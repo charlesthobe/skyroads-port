@@ -104,26 +104,19 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, sr_play
 		draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells,
 					0x5e, 0x5f, i < ful_segs);
 	}
-	const int warn_freq = 9;
 	/* out of oxygen */
 	if (p->end_state == 5) {
-		// Persist HUD warning for an extra adjacent tick
-		switch (tick % warn_freq) {
+		switch (tick % BEEP_INTERVAL) {
 			case 0:
-				sfx(p, 3);
-				[[fallthrough]];
-			case 1:
+			case 1: // Persist HUD warning for an extra adjacent tick
 				swap_hud_area_color(fb, pristine, 160, 161, 7, 6, 0x63, 0x64);
 		}
 	}
 	/* out of fuel */
 	if (p->end_state == 4) {
-		// Persist HUD warning for an extra adjacent tick
-		switch (tick % warn_freq) {
+		switch (tick % BEEP_INTERVAL) {
 			case 0:
-				sfx(p, 3);
-				[[fallthrough]];
-			case 1:
+			case 1: // Persist HUD warning for an extra adjacent tick
 				swap_hud_area_color(fb, pristine, 155, 169, 16, 4, 0x63, 0x64);
 		}
 	}

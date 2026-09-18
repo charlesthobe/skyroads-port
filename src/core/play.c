@@ -262,7 +262,7 @@ fixed:
 }
 
 /* ---- sfx helper (fn_03c2 surface) -------------------------------------- */
-void sfx(sr_play *p, int n)
+static void sfx(sr_play *p, int n)
 {
 	p->pending_sfx = n + 1;	 /* 0 = none */
 	p->sfx_tick = p->tick;
@@ -324,9 +324,22 @@ int sr_play_tick(sr_play *p)
 
 	/* exit checks (§4) */
 	if (!(p->expl_ctr != 0 && p->expl_ctr <= 0x2a)) {
-		if (p->end_state == 1) return SR_RES_WALL;
-		if (p->end_state == 2) return SR_RES_BURNED;
-		if (p->end_state == 3 && p->expl_ctr != 0) return SR_RES_FELL;
+		switch (p->end_state) {
+			case 1:
+				return SR_RES_WALL;
+			case 2:
+				return SR_RES_BURNED;
+			case 3:
+				if ( p->expl_ctr != 0) {
+					return SR_RES_FELL;
+				}
+				break;
+			case 4:
+			case 5:
+				if (p->tick % BEEP_INTERVAL == 0) {
+					sfx(p, 3);
+				}
+		}
 		if (p->end_frames >= 0x6c) return p->end_state;
 	}
 
