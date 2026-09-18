@@ -3,6 +3,8 @@
 #include "text.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 /* ------------------------------------------------------------------ init */
 
@@ -17,7 +19,7 @@ bool sr_game_init(sr_game *g, sr_io io, char *err, size_t errlen)
 	/* boot into the intro (fn_4575): black -> ANIM palette + title pict,
 	 * fade in, sound, animation */
 	g->state = SR_ST_INTRO;
-	g->want_song = -1;
+	g->want_song = 0;
 	g->fade = SR_FADE_IN;
 	g->fade_t = 0;
 	sr_fb_clear(&g->fb, 0);
@@ -49,13 +51,17 @@ static void start_road(sr_game *g, int entry, int demo)
 	g->demo_mode = demo ? 1 : 0;
 	g->paused = 0;
 	g->tick = 0;
-	if (!demo) {
-		/* gameplay music: random song 2..13, avoid repeating (main 0x29f) */
-		g->rng = g->rng * 1103515245u + 12345u + (uint32_t)entry;
-		int song = 2 + (int)((g->rng >> 16) % 12);
-		if (song == g->want_song)
-			song = 2 + (song - 1) % 12;
+	if (!demo && g->state != SR_ST_DIED) {
+		/* gameplay music: random song 2..13, (main 0x29f) */
+		static bool seeded = false;
+		if (!seeded) {
+			srand(time(NULL));
+		}
+		int song = (rand() % (13 - 2 + 1)) + 2;
 		g->want_song = song;
+	}
+	if (g->state == SR_ST_DIED) {
+		g->state = SR_ST_GAME;
 	}
 }
 
@@ -65,6 +71,7 @@ static void enter_state(sr_game *g, sr_state st)
 	g->idle_ticks = 0;
 	switch (st) {
 		case SR_ST_GAME:
+		case SR_ST_DIED:
 			if (g->demo_mode == 2)		/* queued attract demo */
 				start_road(g, 0, 1);
 			else if (g->road_entry)
@@ -101,10 +108,6 @@ static void draw_mainmenu(sr_game *g)
 	int v = g->menu_sel;
 	if (v >= 0 && v < g->assets.mainmenu.n_picts)
 		sr_blit_pict(&g->fb, &g->assets.mainmenu.picts[v], false);
-	/* port credit (menu box palette: base 190, entry 2 = white) */
-	const char *credit = "Ported by Ammaar and Fable";
-	sr_text(&g->fb, (SR_SCREEN_W - sr_text_width(credit)) / 2, 190,
-			credit, 192);
 	/* original order (fn_4e36): intro.lzs FIRST cmap (title), mainmenu
 	 * box section at 190; later intro cmaps are logo fade palettes */
 	memset(g->cur_pal, 0, sizeof g->cur_pal);
@@ -370,10 +373,10 @@ static void tick_game(sr_game *g, const sr_input *in)
 		return;
 	}
 	/* deaths (1..5): replay the same road immediately (main 0x3b4) */
-	fade_to(g, SR_ST_GAME);
+	fade_to(g, SR_ST_DIED);
 }
 
-static void tick_roadend(sr_game *g, const sr_input *in)
+static void tick_roadend(sr_game *g)
 {
 	static int counter = 0;
 	if (counter < 36) {
@@ -406,12 +409,22 @@ static void game_tick_inner(sr_game *g, const sr_input *in)
 			/* render the new state once so the fade-in has pixels */
 			sr_input none = { 0 };
 			switch (g->state) {
-				case SR_ST_MAINMENU: draw_mainmenu(g); break;
-				case SR_ST_GOMENU:	draw_gomenu(g);	break;
-				case SR_ST_SETMENU: tick_setmenu(g, &none); break;
-				case SR_ST_HELP:	 tick_help(g, &none);	break;
-				case SR_ST_GAME:	 tick_game(g, &none);	break;
-				default: break;
+				case SR_ST_MAINMENU:
+					draw_mainmenu(g);
+					break;
+				case SR_ST_GOMENU:
+					draw_gomenu(g);
+					break;
+				case SR_ST_SETMENU:
+					tick_setmenu(g, &none);
+					break;
+				case SR_ST_HELP:
+					tick_help(g, &none);
+					break;
+				case SR_ST_GAME:
+					tick_game(g, &none);
+				default:
+					;
 			}
 		}
 		return;
@@ -424,14 +437,30 @@ static void game_tick_inner(sr_game *g, const sr_input *in)
 	}
 
 	switch (g->state) {
-		case SR_ST_INTRO:	tick_intro(g, in);	break;
-		case SR_ST_MAINMENU: tick_mainmenu(g, in); break;
-		case SR_ST_GOMENU:	tick_gomenu(g, in);	break;
-		case SR_ST_HELP:	 tick_help(g, in);	 break;
-		case SR_ST_GAME:	 tick_game(g, in);	 break;
-		case SR_ST_SETMENU: tick_setmenu(g, in); break;
-		case SR_ST_ROADEND: tick_roadend(g, in); break;
-		case SR_ST_QUIT:	 break;
+		case SR_ST_INTRO:
+			tick_intro(g, in);
+			break;
+		case SR_ST_MAINMENU:
+			tick_mainmenu(g, in);
+			break;
+		case SR_ST_GOMENU:
+			tick_gomenu(g, in);
+			break;
+		case SR_ST_HELP:
+			tick_help(g, in);
+			break;
+		case SR_ST_GAME:
+			tick_game(g, in);
+			break;
+		case SR_ST_SETMENU:
+			tick_setmenu(g, in);
+			break;
+		case SR_ST_ROADEND:
+			tick_roadend(g);
+			break;
+		case SR_ST_QUIT:
+		default:
+			;
 	}
 }
 

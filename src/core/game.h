@@ -16,6 +16,7 @@ typedef enum {
 	SR_ST_HELP,
 	SR_ST_GAME,
 	SR_ST_ROADEND,			/* "Road Completed" / "The End" */
+	SR_ST_DIED,
 	SR_ST_QUIT
 } sr_state;
 
