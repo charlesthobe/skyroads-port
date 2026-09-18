@@ -111,9 +111,9 @@ static void fill_record(fillctx *c, int half, int color_override)
 
 static void skip_record(fillctx *c)			/* fn_31b5 */
 {
-	c->si += 3;
-	while (*c->si != 0xFF)
+	do {
 		c->si += 3;
+	} while (*c->si != 0xFF);
 	c->si++;
 }
 
@@ -183,8 +183,8 @@ static void compose_tun_low(compctx *cc)		/* 0x2ee1 */
 		fill_record(&cc->f, cc->half, 0);
 	if (shape(cc->nearer) < 2) {
 		seek_kind(cc, 3);
-		skip_record(&cc->f);								/* plain top */
-		fill_record(&cc->f, cc->half, 0);					/* split tops */
+		skip_record(&cc->f);								/* Tunnel opening */
+		fill_record(&cc->f, cc->half, 0);					/* Tunnel ceiling */
 		fill_record(&cc->f, cc->half, 0);
 	}
 }
@@ -234,12 +234,16 @@ static void compose_tun_high(compctx *cc)	 /* 0x2fb0 */
 		fill_record(&cc->f, cc->half, 0x41);
 	}
 	seek_kind(cc, 2);
-	skip_record(&cc->f);
+	fill_record(&cc->f, cc->half, blockcolor(cc->tile));
 	if (shape(cc->inner) < 2)
 		fill_record(&cc->f, cc->half, 0);
 	seek_kind(cc, 4);
-	for (int i = 0; i < 6; i++)
+	if (shape(cc->nearer) < 2) {
+		seek_kind(cc, 3);
+		skip_record(&cc->f);								/* Tunnel opening */
+		fill_record(&cc->f, cc->half, 0);					/* Tunnel ceiling */
 		fill_record(&cc->f, cc->half, 0);
+	}
 	seek_kind(cc, 5);
 	fill_record(&cc->f, cc->half, blockcolor(cc->tile));
 	if (shape(cc->inner) < 4)
@@ -253,13 +257,26 @@ static void compose_tun_high(compctx *cc)	 /* 0x2fb0 */
 static void compose_tile(compctx *cc)
 {
 	switch (shape(cc->tile)) {
-		case 0: compose_floor(cc); break;
-		case 1: compose_tunnel(cc); break;
-		case 2: compose_lowblock(cc); break;
-		case 3: compose_tun_low(cc); break;
-		case 4: compose_highblock(cc); break;
-		case 5: compose_tun_high(cc); break;
-		default: break;							/* 6..15: nothing */
+		case 0:
+			compose_floor(cc);
+			break;
+		case 1:
+			compose_tunnel(cc);
+			break;
+		case 2:
+			compose_lowblock(cc);
+			break;
+		case 3:
+			compose_tun_low(cc);
+			break;
+		case 4:
+			compose_highblock(cc);
+			break;
+		case 5:
+			compose_tun_high(cc);
+			break;
+		default:	/* 6..15: nothing */
+			;
 	}
 }
 
