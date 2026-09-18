@@ -199,6 +199,17 @@ static void pump_events(app_t *a)
 				a->quit = true;
 				break;
 			case SDL_KEYDOWN:
+				if ((e.key.keysym.mod & KMOD_ALT) && e.key.keysym.sym == SDLK_RETURN) {
+					if (SDL_GetWindowFlags(a->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+						SDL_SetWindowFullscreen(a->win, 0);
+						SDL_ShowCursor(SDL_ENABLE);
+					} else {
+						SDL_SetWindowFullscreen(a->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+						SDL_ShowCursor(SDL_DISABLE);
+					}
+					break;
+				}
+				[[fallthrough]];
 			case SDL_KEYUP:
 				if (e.key.repeat)
 					break;
@@ -464,6 +475,8 @@ int main(int argc, char **argv)
 	a->win = SDL_CreateWindow("SkyRoads",
 							 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 							 win_w, win_h, win_flags);
+	SDL_SetWindowFullscreen(a->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	SDL_ShowCursor(SDL_DISABLE);
 	a->ren = SDL_CreateRenderer(a->win, -1, SDL_RENDERER_PRESENTVSYNC);
 	SDL_RenderSetLogicalSize(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5);
 	a->tex = SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_ARGB8888,
