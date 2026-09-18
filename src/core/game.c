@@ -78,7 +78,7 @@ static void enter_state(sr_game *g, sr_state st)
 				start_road(g, g->road_entry, 0);
 			break;
 		case SR_ST_MAINMENU:
-			g->want_song = 0;
+			g->want_song = 1;
 			g->demo_mode = 0;
 			break;
 		case SR_ST_GOMENU:
@@ -193,21 +193,17 @@ static void tick_intro(sr_game *g, const sr_input *in)
 		sr_blit_pict(&g->fb, &g->assets.anim[g->intro_rec].pict, false);
 		g->intro_rec++;
 	}
-	if (g->intro_rec >= g->assets.n_anim && at > 2u * (uint32_t)g->assets.anim_frames + 72) {
-		fade_to(g, SR_ST_MAINMENU);
-	}
-}
-
-static void tick_mainmenu(sr_game *g, const sr_input *in)
-{
 	if (any_pressed(in))
 		g->idle_ticks = 0;
 	else if (++g->idle_ticks > 36u * 10) {	 /* attract demo after 10 s */
 		g->idle_ticks = 0;
 		g->demo_mode = 2;
 		fade_to(g, SR_ST_GAME);
-		return;
 	}
+}
+
+static void tick_mainmenu(sr_game *g, const sr_input *in)
+{
 	if (in->pressed[SR_KEY_DOWN] && g->menu_sel < 2) g->menu_sel++;
 	if (in->pressed[SR_KEY_UP] && g->menu_sel > 0) g->menu_sel--;
 	if (in->pressed[SR_KEY_ESC]) g->state = SR_ST_QUIT;
