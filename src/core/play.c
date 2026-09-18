@@ -262,7 +262,7 @@ fixed:
 }
 
 /* ---- sfx helper (fn_03c2 surface) -------------------------------------- */
-static void sfx(sr_play *p, int n)
+void sfx(sr_play *p, int n)
 {
 	p->pending_sfx = n + 1;	 /* 0 = none */
 	p->sfx_tick = p->tick;

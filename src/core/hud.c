@@ -1,6 +1,6 @@
 #include "hud.h"
 #include "tables.h"
-#include <string.h>
+#include "play.h"
 
 /* Dashboard HUD per re/notes/renderer.md §9 — stateless redraw over the
  * pristine dashboard already present in the framebuffer. */
@@ -64,7 +64,21 @@ static void draw_digit(sr_fb *fb, int x, int y, int digit) {
 	}
 }
 
-void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const sr_play *p) {
+void swap_hud_area_color(sr_fb *fb, const uint8_t *pristine, int x, int y, int width, int height,
+						int match_color, int new_color) {
+	for (int i = 0; i < width; i++) {
+		int yy = y;
+		while (yy <= y + height) {
+			if (pristine[yy * 320 + x] == match_color) {
+				fb->px[yy * 320 + x] = new_color;
+			}
+			yy++;
+		}
+		x++;
+	}
+}
+
+void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, sr_play *p, const uint32_t tick) {
 	/* speedometer: 34 segments, displayed speed excludes autopilot delta */
 	int32_t disp = p->speed - p->ap_delta;
 	if (disp < 0) disp = 0;
@@ -90,7 +104,21 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 		draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells,
 					0x5e, 0x5f, i < ful_segs);
 	}
-	/* progress bar: 30 columns at x=0x2a.., a slot is 6 pixels at its thickest */
+	/* out of oxygen */
+	if (p->end_state == 5) {
+		if (tick % 10 == 0) {
+			swap_hud_area_color(fb, pristine, 160, 161, 7, 6, 0x63, 0x64);
+			sfx(p, 3);
+		}
+	}
+	/* out of fuel */
+	if (p->end_state == 4) {
+		if (tick % 10 == 0) {
+			swap_hud_area_color(fb, pristine, 155, 169, 16, 4, 0x63, 0x64);
+			sfx(p, 3);
+		}
+	}
+	/* progress bar: 30 columns at x=42.., a slot is 6 pixels at its thickest */
 	int rows = p->road->rows;
 	int steps = 0;
 	if (rows > 3) {
@@ -101,16 +129,7 @@ void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, const s
 	if (steps < 0) steps = 0;
 	if (steps > 29) steps = 29;
 	for (int i = 0; i < steps; i++) {
-		int x = 0x2a + i;
-		int y = 140;
-		uint8_t slot_color = 0x65;
-		int yy = y;
-		while (yy <= y + 6) {
-			if (pristine[yy * 320 + x] == slot_color) {
-				fb->px[yy * 320 + x] = 0x60;
-			}
-			yy++;
-		}
+		swap_hud_area_color(fb, pristine, 42 + i, 140, 1, 6, 0x65, 0x60);
 	}
 	/* jump-o-master light: 26x5 at (203,156) */
 	{

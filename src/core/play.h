@@ -79,4 +79,7 @@ extern const uint16_t sr_blocktop[6];	 /* ds:0xde */
 extern const uint16_t sr_tun_inner[38];	/* ds:0x46 */
 extern const uint16_t sr_tun_outer[38];	/* ds:0x92 */
 
+// Plays sound effect n
+void sfx(sr_play *p, int n);
+
 #endif
