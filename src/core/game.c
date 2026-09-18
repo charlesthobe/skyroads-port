@@ -18,6 +18,10 @@ static void start_intro(sr_game *g) {
 	memset(g->cur_pal, 0, sizeof g->cur_pal);
 	for (int i = 0; i < g->assets.anim_pal.count && i < 256; i++)
 		g->cur_pal[g->assets.anim_pal.base + i] = g->assets.anim_pal.colors[i];
+
+	// Reset intro
+	g->intro_t = 0;
+	g->intro_rec = 0;
 }
 
 bool sr_game_init(sr_game *g, sr_io io, char *err, size_t errlen) {
