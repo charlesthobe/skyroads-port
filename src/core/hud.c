@@ -15,11 +15,12 @@ static int speed_rec(const sr_assets *a, int i, seg_rec *r)
 {
 	if (!a->speed_dat || (size_t)(i * 2 + 2) > a->speed_size)
 		return 0;
-	uint16_t off = ((uint16_t*)a->speed_dat)[i];
-	const uint8_t *p = a->speed_dat + 34 * 2 + off;
+	uint16_t* speed_dat_array = (uint16_t*)a->speed_dat;
+	uint16_t off = speed_dat_array[i];
+	const uint8_t* p = a->speed_dat + 34 * 2 + off;
 	if (p + 4 > a->speed_dat + a->speed_size)
 		return 0;
-	r->ofs = *(uint16_t*)p;
+	r->ofs = *(uint16_t*)p; // p[0] | p[1] << 8
 	r->w = p[2];
 	r->h = p[3];
 	r->cells = p + 4;

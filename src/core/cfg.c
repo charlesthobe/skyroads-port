@@ -14,13 +14,13 @@ void sr_cfg_load(sr_cfg *c, const sr_io *io)
 {
 	memset(c, 0, sizeof *c);
 	size_t size;
-	uint8_t *d = io->read_file("skyroads.cfg", &size);
+	uint16_t* d = io->read_file("skyroads.cfg", &size);
 	if (!d)
 		return;
 	if (size >= 66) {
 		uint16_t w[33];
 		for (int i = 0; i < 33; i++)
-			w[i] = ((uint16_t*)d)[i];
+			w[i] = d[i];
 		if (checksum(w) == w[0]) {
 			c->control = w[1];
 			c->sound_off = w[2];

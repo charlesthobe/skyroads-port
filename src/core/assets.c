@@ -113,22 +113,22 @@ void sr_assets_free_gfx(sr_gfxfile *g)
 
 bool sr_assets_load_road(sr_assets *a, int entry, sr_road *road)
 {
-	uint8_t *data;
+	uint16_t* data;
 	size_t size;
-	if (!read_whole(a, "roads.lzs", &data, &size))
+	if (!read_whole(a, "roads.lzs", (uint8_t**)&data, &size))
 		return false;
 
-	uint16_t first = *(uint16_t*)data;
+	uint16_t first = data[0];
 	int count = first / 4;
 	if (entry < 0 || entry >= count) {
 		free(data);
 		return false;
 	}
-	uint16_t off = ((uint16_t*)data)[entry*2];
-	uint16_t raw = ((uint16_t*)data)[entry*2+1];
+	uint16_t off = data[entry*2];
+	uint16_t raw = data[entry*2+1];
 
 	lzs_stream s;
-	lzs_init(&s, data, size, off);
+	lzs_init(&s, (uint8_t*)data, size, off);
 	road->gravity = lzs_u16(&s);
 	road->word2	= lzs_u16(&s);
 	road->word3	= lzs_u16(&s);
@@ -161,13 +161,13 @@ bool sr_assets_load_world(sr_assets *a, int world)
 
 static bool load_gauge(sr_assets *a, const char *name, sr_gauge_seg *segs)
 {
-	uint8_t *d;
+	uint16_t *d;
 	size_t size;
-	if (!read_whole(a, name, &d, &size))
+	if (!read_whole(a, name, (uint8_t**)&d, &size))
 		return false;
 	for (int i = 0; i < 10; i++) {
-		uint16_t off = ((uint16_t*)d)[i];
-		const uint8_t *r = d + 20 + off;
+		uint16_t off = d[i];
+		const uint8_t *r = (uint8_t*)d + 20 + off;
 		segs[i].screen_ofs = *(uint16_t*)r;
 		segs[i].w = r[2];
 		segs[i].h = r[3];

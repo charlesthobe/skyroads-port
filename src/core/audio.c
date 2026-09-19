@@ -222,22 +222,22 @@ bool sr_audio_music(sr_audio *a, const sr_assets *assets, int n)
 		return false;
 
 	size_t size;
-	uint8_t *data = assets->io.read_file("muzax.lzs", &size);
+	uint16_t* data = assets->io.read_file("muzax.lzs", &size);
 	if (!data)
 		return false;
-	if ((size_t)(n * 3 + 3) * 2 > size) {
+	if ((size_t)(n * 3 + 3) * sizeof(uint16_t) > size) {
 		free(data);
 		return false;
 	}
-	uint16_t off	= ((uint16_t*)data)[n*3];
-	uint16_t ninst	= ((uint16_t*)data)[n*3+1];
-	uint16_t raw	= ((uint16_t*)data)[n*3+2];
+	uint16_t off	= data[n*3];
+	uint16_t ninst	= data[n*3+1];
+	uint16_t raw	= data[n*3+2];
 	if (off == 0 || raw == 0 || raw > sizeof a->song) {
 		free(data);
 		return false;
 	}
 	lzs_stream s;
-	lzs_init(&s, data, size, off);
+	lzs_init(&s, (uint8_t*)data, size, off);
 	lzs_decompress(&s, a->song, raw);
 	free(data);
 
@@ -276,22 +276,23 @@ void sr_audio_sfx(sr_audio *a, const sr_assets *assets, int n)
 	if (!a->enabled)
 		return;
 	size_t size;
-	uint8_t *d = assets->io.read_file("sfx.snd", &size);
-	if (!d)
+	uint8_t* data = assets->io.read_file("sfx.snd", &size);
+	uint16_t* params = (uint16_t*)data;
+	if (!data)
 		return;
-	uint16_t count = *(uint16_t*)d / 2 - 1;
+	uint16_t count = params[0] / 2 - 1;
 	if (n < 0 || n >= count) {
-		free(d);
+		free(data);
 		return;
 	}
-	uint16_t off = ((uint16_t*)d)[n];
-	uint16_t next = ((uint16_t*)d)[n+1];
+	uint16_t off = params[n];
+	uint16_t next = params[n+1];
 	if (next > size || off >= next) {
-		free(d);
+		free(data);
 		return;
 	}
-	sr_audio_pcm(a, d + off + 1, (size_t)(next - off - 1), d[off]);
-	free(d);
+	sr_audio_pcm(a, data + off + 1, (size_t)(next - off - 1), data[off]);
+	free(data);
 }
 
 void sr_audio_render(sr_audio *a, int16_t *stereo, int frames)
