@@ -63,7 +63,7 @@ static void draw_digit(sr_fb* fb, int x, int y, int digit) {
   }
 }
 
-void swap_hud_area_color(sr_fb* fb, const uint8_t* pristine, int x, int y,
+void swap_color_within_rect(sr_fb* fb, const uint8_t* pristine, int x, int y,
                          int width, int height, int match_color,
                          int new_color) {
   for (int i = 0; i < width; i++) {
@@ -113,7 +113,7 @@ void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
     switch (tick % BEEP_INTERVAL) {
     case 0:
     case 1: // Persist HUD warning for an extra adjacent tick
-      swap_hud_area_color(fb, pristine, 160, 161, 7, 6, 0x63, 0x64);
+      swap_color_within_rect(fb, pristine, 160, 161, 7, 6, 0x63, 0x64);
     }
   }
   /* out of fuel */
@@ -121,7 +121,7 @@ void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
     switch (tick % BEEP_INTERVAL) {
     case 0:
     case 1: // Persist HUD warning for an extra adjacent tick
-      swap_hud_area_color(fb, pristine, 155, 169, 16, 4, 0x63, 0x64);
+      swap_color_within_rect(fb, pristine, 155, 169, 16, 4, 0x63, 0x64);
     }
   }
   /* progress bar: 30 columns at x=42.., a slot is 6 pixels at its thickest */
@@ -137,7 +137,7 @@ void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
   if (steps > 29)
     steps = 29;
   for (int i = 0; i < steps; i++) {
-    swap_hud_area_color(fb, pristine, 42 + i, 140, 1, 6, 0x65, 0x60);
+    swap_color_within_rect(fb, pristine, 42 + i, 140, 1, 6, 0x65, 0x60);
   }
   /* jump-o-master light: 26x5 at (203,156) */
   {
