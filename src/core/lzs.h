@@ -8,13 +8,14 @@
 typedef struct {
 	const uint8_t *data;
 	size_t size;
-	size_t pos;		/* index of byte AFTER the lookahead */
+	size_t next_pos;	/* index of byte AFTER the lookahead */
 	uint8_t cur;		/* lookahead register */
-	uint8_t bits;	 /* bits remaining in cur (8 = fresh byte) */
+	uint8_t bits;		/* bits remaining in cur (8 = fresh byte) */
 } lzs_stream;
 
 void	 lzs_init(lzs_stream *s, const uint8_t *data, size_t size, size_t start);
-uint8_t lzs_byte(lzs_stream *s);
+void	 lzs_advance(lzs_stream *s); // Slightly lighter than lzs_byte() and doesn't give warning about discarded return
+uint8_t	 lzs_byte(lzs_stream *s);
 uint16_t lzs_u16(lzs_stream *s);
 void	 lzs_raw(lzs_stream *s, uint8_t *dst, size_t n);
 uint32_t lzs_bits(lzs_stream *s, int n);

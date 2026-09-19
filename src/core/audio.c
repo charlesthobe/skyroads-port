@@ -162,7 +162,7 @@ static void music_tick(sr_audio *a)
 		return;
 	}
 	while (a->ev + 1 < a->song_end) {
-		uint16_t w = (uint16_t)(a->ev[0] | (a->ev[1] << 8));
+		uint16_t w = *(uint16_t*)a->ev;
 		a->ev += 2;
 		int op = w & 7;
 		int ch = (w >> 4) & 0xf;
@@ -225,13 +225,13 @@ bool sr_audio_music(sr_audio *a, const sr_assets *assets, int n)
 	uint8_t *data = assets->io.read_file("muzax.lzs", &size);
 	if (!data)
 		return false;
-	if ((size_t)(n * 6 + 6) > size) {
+	if ((size_t)(n * 3 + 3) * 2 > size) {
 		free(data);
 		return false;
 	}
-	uint16_t off	= (uint16_t)(data[n*6]	| (data[n*6+1] << 8));
-	uint16_t ninst = (uint16_t)(data[n*6+2] | (data[n*6+3] << 8));
-	uint16_t raw	= (uint16_t)(data[n*6+4] | (data[n*6+5] << 8));
+	uint16_t off	= ((uint16_t*)data)[n*3];
+	uint16_t ninst	= ((uint16_t*)data)[n*3+1];
+	uint16_t raw	= ((uint16_t*)data)[n*3+2];
 	if (off == 0 || raw == 0 || raw > sizeof a->song) {
 		free(data);
 		return false;
@@ -279,13 +279,13 @@ void sr_audio_sfx(sr_audio *a, const sr_assets *assets, int n)
 	uint8_t *d = assets->io.read_file("sfx.snd", &size);
 	if (!d)
 		return;
-	int count = (d[0] | (d[1] << 8)) / 2 - 1;
+	uint16_t count = *(uint16_t*)d / 2 - 1;
 	if (n < 0 || n >= count) {
 		free(d);
 		return;
 	}
-	uint16_t off = (uint16_t)(d[n*2]	 | (d[n*2+1] << 8));
-	uint16_t next = (uint16_t)(d[n*2+2]	| (d[n*2+3] << 8));
+	uint16_t off = ((uint16_t*)d)[n];
+	uint16_t next = ((uint16_t*)d)[n+1];
 	if (next > size || off >= next) {
 		free(d);
 		return;

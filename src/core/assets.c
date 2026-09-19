@@ -39,7 +39,7 @@ static bool load_gfx(sr_assets *a, const char *name, sr_rgb6 *pal,
 	int n = 0, cap = 0, section = -1;
 	int base = 0;
 
-	while (s.pos < size) {
+	while (s.next_pos < size) {
 		uint8_t tag[4];
 		lzs_raw(&s, tag, 4);
 		if (!memcmp(tag, "CMAP", 4)) {
@@ -59,7 +59,7 @@ static bool load_gfx(sr_assets *a, const char *name, sr_rgb6 *pal,
 					sec->colors[i] = c;
 			}
 			for (int i = 0; i < count * 2; i++)
-				lzs_byte(&s);					/* EGA palette: skip */
+				lzs_advance(&s);					/* EGA palette: skip */
 		} else if (!memcmp(tag, "PICT", 4)) {
 			sr_pict p;
 			p.screen_ofs = lzs_u16(&s);
@@ -118,14 +118,14 @@ bool sr_assets_load_road(sr_assets *a, int entry, sr_road *road)
 	if (!read_whole(a, "roads.lzs", &data, &size))
 		return false;
 
-	uint16_t first = (uint16_t)(data[0] | (data[1] << 8));
+	uint16_t first = *(uint16_t*)data;
 	int count = first / 4;
 	if (entry < 0 || entry >= count) {
 		free(data);
 		return false;
 	}
-	uint16_t off = (uint16_t)(data[entry*4]	| (data[entry*4+1] << 8));
-	uint16_t raw = (uint16_t)(data[entry*4+2] | (data[entry*4+3] << 8));
+	uint16_t off = ((uint16_t*)data)[entry*2];
+	uint16_t raw = ((uint16_t*)data)[entry*2+1];
 
 	lzs_stream s;
 	lzs_init(&s, data, size, off);
@@ -144,10 +144,6 @@ bool sr_assets_load_road(sr_assets *a, int entry, sr_road *road)
 	road->cells = xmalloc(500 * 7 * sizeof(uint16_t));
 	memset(road->cells, 0, 500 * 7 * sizeof(uint16_t));
 	lzs_decompress(&s, (uint8_t *)road->cells, raw);
-#if defined(SR_BIG_ENDIAN)
-	for (int i = 0; i < road->rows * 7; i++)
-		road->cells[i] = (uint16_t)((road->cells[i] >> 8) | (road->cells[i] << 8));
-#endif
 	free(data);
 	return true;
 }
@@ -170,9 +166,9 @@ static bool load_gauge(sr_assets *a, const char *name, sr_gauge_seg *segs)
 	if (!read_whole(a, name, &d, &size))
 		return false;
 	for (int i = 0; i < 10; i++) {
-		uint16_t off = (uint16_t)(d[i*2] | (d[i*2+1] << 8));
+		uint16_t off = ((uint16_t*)d)[i];
 		const uint8_t *r = d + 20 + off;
-		segs[i].screen_ofs = (uint16_t)(r[0] | (r[1] << 8));
+		segs[i].screen_ofs = *(uint16_t*)r;
 		segs[i].w = r[2];
 		segs[i].h = r[3];
 		size_t n = (size_t)segs[i].w * segs[i].h;
@@ -198,7 +194,7 @@ static bool load_trekdat(sr_assets *a)
 	a->n_trek = 0;
 	a->trek = NULL;
 	/* records until stream exhausted; mirror EXE 0xBB loop */
-	while (s.pos + 4 <= size + 1) {
+	while (s.next_pos + 4 <= size + 1) {
 		uint32_t raw = lzs_u16(&s);
 		uint32_t comp = lzs_u16(&s);
 		if (raw == 0 || comp > raw)
@@ -216,7 +212,7 @@ static bool load_trekdat(sr_assets *a)
 			a->trek = realloc(a->trek, (size_t)cap * sizeof(*a->trek));
 		}
 		a->trek[a->n_trek++] = o;
-		if (s.pos >= size)
+		if (s.next_pos >= size)
 			break;
 	}
 	free(d);
@@ -249,7 +245,7 @@ static bool load_anim(sr_assets *a)
 			a->anim_pal.colors[i].b = lzs_byte(&s);
 		}
 		for (int i = 0; i < count * 2; i++)
-			lzs_byte(&s);
+			lzs_advance(&s);
 	}
 	int cap = 0;
 	a->n_anim = 0;

@@ -88,7 +88,7 @@ static void fill_record(fillctx *c, int half, int color_override)
 	if (color_override)
 		k = (uint8_t)color_override;
 	uint8_t fill = sr_quad[k < 74 ? k : 0][half];
-	int anchor = c->si[0] | (c->si[1] << 8);
+	uint16_t anchor = *(uint16_t*)c->si;
 	c->si += 2;
 	for (;;) {
 		uint8_t off = *c->si++;
@@ -130,7 +130,7 @@ typedef struct {
 
 static void seek_kind(compctx *cc, int kind)
 {
-	uint16_t off = (uint16_t)(cc->dir[kind*2] | (cc->dir[kind*2+1] << 8));
+	uint16_t off = ((uint16_t*)cc->dir)[kind];
 	cc->f.si = cc->f.obj + off;
 }
 

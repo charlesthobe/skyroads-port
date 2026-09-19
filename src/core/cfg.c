@@ -20,7 +20,7 @@ void sr_cfg_load(sr_cfg *c, const sr_io *io)
 	if (size >= 66) {
 		uint16_t w[33];
 		for (int i = 0; i < 33; i++)
-			w[i] = (uint16_t)(d[i*2] | (d[i*2+1] << 8));
+			w[i] = ((uint16_t*)d)[i];
 		if (checksum(w) == w[0]) {
 			c->control = w[1];
 			c->sound_off = w[2];
