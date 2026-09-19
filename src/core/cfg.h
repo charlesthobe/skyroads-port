@@ -10,12 +10,12 @@
 #include "sr.h"
 
 typedef struct {
-	uint16_t control;
-	uint16_t sound_off;
-	uint16_t completions[30];
+  uint16_t control;
+  uint16_t sound_off;
+  uint16_t completions[30];
 } sr_cfg;
 
-void sr_cfg_load(sr_cfg *c, const sr_io *io);
-void sr_cfg_save(const sr_cfg *c, const sr_io *io);
+void sr_cfg_load(sr_cfg* c, const sr_io* io);
+void sr_cfg_save(const sr_cfg* c, const sr_io* io);
 
 #endif

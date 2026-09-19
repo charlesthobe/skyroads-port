@@ -5,10 +5,10 @@
 #ifndef SR_TEXT_H
 #define SR_TEXT_H
 
-#include "sr.h"
 #include "gfx.h"
+#include "sr.h"
 
-void sr_text(sr_fb *fb, int x, int y, const char *s, uint8_t color);
-int sr_text_width(const char *s);
+void sr_text(sr_fb* fb, int x, int y, const char* s, uint8_t color);
+int sr_text_width(const char* s);
 
 #endif

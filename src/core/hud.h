@@ -1,11 +1,12 @@
 #ifndef SR_HUD_H
 #define SR_HUD_H
 
-#include "sr.h"
 #include "assets.h"
 #include "gfx.h"
 #include "play.h"
+#include "sr.h"
 
-void sr_hud_draw(sr_fb *fb, const sr_assets *a, const uint8_t *pristine, sr_play *p, const uint32_t tick);
+void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
+                 sr_play* p, const uint32_t tick);
 
 #endif
