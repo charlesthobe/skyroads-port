@@ -79,10 +79,6 @@ int sr_solid(const sr_play* p, uint32_t z, uint16_t x,
 int sr_in_tunnel(const sr_play* p, uint32_t z, uint16_t x,
                  uint16_t y); /* fn_0533 */
 
-extern const uint16_t sr_blocktop[6];   /* ds:0xde */
-extern const uint16_t sr_tun_inner[38]; /* ds:0x46 */
-extern const uint16_t sr_tun_outer[38]; /* ds:0x92 */
-
 #define BEEP_INTERVAL 9
 
 #endif

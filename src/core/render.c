@@ -353,15 +353,35 @@ static void draw_shadow(sr_fb* fb, int left, int top, int clearance)
 }
 
 /* ground support height for the shadow (fn_0b71) */
-static uint16_t support(const sr_play* p, uint32_t z, uint16_t x, int in_tun)
+// a height of 0 means no shadow.
+static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x,
+                                  int in_tun)
 {
-  uint16_t t = sr_tile_at(p, z, x);
-  int sh = (t >> 8) & 0xf;
-  if (sh >= 2 && sh <= 5)
-    return sr_blocktop[sh];
-  if (sh == 1 && !in_tun)
-    return 0;
-  return (t & 0xf) ? 0x2800 : 0;
+  uint16_t tile = sr_tile_at(p, z, x);
+  uint8_t tile_elevation = (tile >> 8) & 0xf;
+  uint16_t height;
+  if (tile_elevation == 0 || in_tun)
+  {
+    if ((tile & 0xf) == 0)
+    {
+      height = 0; // 0 means no shadow
+    }
+    else
+    {
+      // Decompiled code assigns fixed value: 0x2800, since it's already in the
+      // lookup table we can use that instead.
+      height = sr_shadow_base_height[0];
+    }
+  }
+  else if (tile_elevation == 1)
+  {
+    height = 0;
+  }
+  else
+  {
+    height = sr_shadow_base_height[tile_elevation];
+  }
+  return height;
 }
 
 /* ---- frame -------------------------------------------------------------- */
@@ -438,8 +458,10 @@ void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
         draw_ship(fb, cell, left, top);
         if (!p->expl_ctr)
         {
-          uint16_t g1 = support(p, p->z, (uint16_t)(p->x - 0x380), in_tun);
-          uint16_t g2 = support(p, p->z, (uint16_t)(p->x + 0x380), in_tun);
+          uint16_t g1 =
+              get_shadow_height(p, p->z, (uint16_t)(p->x - 0x380), in_tun);
+          uint16_t g2 =
+              get_shadow_height(p, p->z, (uint16_t)(p->x + 0x380), in_tun);
           uint16_t g = g1 > g2 ? g1 : g2;
           if (g)
           {
