@@ -126,6 +126,8 @@ static void skip_record(fillctx* c) /* fn_31b5 */
   {
     c->si += 3;
   } while (*c->si != 0xFF);
+  /* This line isn't in the decompiled code but it crashes without it.
+     most likely there's an error somewhere else that causes it. */
   c->si++;
 }
 
@@ -231,7 +233,7 @@ static void compose_highblock(compctx* cc) /* 0x2f3c */
 static void compose_tunnel(compctx* cc) /* 0x303d */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 1)
+  if (shape(cc->nearer) == 0)
   {
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x43); /* front wall */
@@ -239,7 +241,7 @@ static void compose_tunnel(compctx* cc) /* 0x303d */
   seek_kind(cc, 4);
   for (int i = 0; i < 6; i++)
     fill_record(&cc->f, cc->half, 0); /* arch gradient */
-  if (shape(cc->nearer) < 1)
+  if (shape(cc->nearer) == 0)
   {
     fill_record(&cc->f, cc->half, 0); /* inner rim x2 */
     fill_record(&cc->f, cc->half, 0);
@@ -254,26 +256,34 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x41);
   }
+  /* This line isn't in the decompiled code but it crashes without it, and
+     produces wrong graphics if the second parameter is any other value */
   seek_kind(cc, 2);
-  fill_record(&cc->f, cc->half, blockcolor(cc->tile));
+  skip_record(&cc->f);
   if (shape(cc->inner) < 2)
+  {
     fill_record(&cc->f, cc->half, 0);
-  seek_kind(cc, 4);
+  }
   if (shape(cc->nearer) < 2)
   {
-    seek_kind(cc, 3);
-    skip_record(&cc->f);              /* Tunnel opening */
-    fill_record(&cc->f, cc->half, 0); /* Tunnel ceiling */
+    skip_record(&cc->f);
+    fill_record(&cc->f, cc->half, 0);
     fill_record(&cc->f, cc->half, 0);
   }
   seek_kind(cc, 5);
   fill_record(&cc->f, cc->half, blockcolor(cc->tile));
   if (shape(cc->inner) < 4)
+  {
     fill_record(&cc->f, cc->half, 0);
+  }
   else
+  {
     skip_record(&cc->f);
+  }
   if (shape(cc->nearer) < 4)
+  {
     fill_record(&cc->f, cc->half, 0);
+  }
 }
 
 static void compose_tile(compctx* cc)
@@ -368,8 +378,8 @@ static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x,
     }
     else
     {
-      // Decompiled code assigns fixed value: 0x2800, since it's already in the
-      // lookup table we can use that instead.
+      // Decompiled code assigns fixed value: 0x2800, since it's already in
+      // the lookup table we can use that instead.
       height = sr_shadow_base_height[0];
     }
   }
@@ -384,7 +394,8 @@ static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x,
   return height;
 }
 
-/* ---- frame -------------------------------------------------------------- */
+/* ---- frame --------------------------------------------------------------
+ */
 
 void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
                      const sr_play* p, uint32_t tick, int on_sticky)
