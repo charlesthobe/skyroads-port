@@ -150,7 +150,7 @@ endif()
 
 add_executable(sr_dump			 ${CORE_SRC} src/tools/dump_frames.c)
 add_executable(sr_render_test ${CORE_SRC} src/tools/render_test.c)
-add_executable(sr_demo_test	src/core/lzs.c src/core/assets.c src/core/play.c
+add_executable(sr_demo_test	src/core/lzs.c src/core/assets.c src/core/play.c src/core/tables.c
 	src/tools/demo_test.c)
 add_executable(sr_music_test src/core/lzs.c src/core/assets.c src/core/audio.c
 	src/thirdparty/opl3.c src/tools/music_test.c)
