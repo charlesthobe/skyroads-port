@@ -229,9 +229,7 @@ static void pump_events(app_t* a) {
         break;
       for (size_t i = 0; i < sizeof keymap / sizeof *keymap; i++)
         if (e.key.keysym.scancode == keymap[i].sc) {
-          a->input.held[keymap[i].key] = (e.type == SDL_KEYDOWN);
-          if (e.type == SDL_KEYDOWN)
-            a->input.pressed[keymap[i].key] = 1;
+          a->input.pressed[keymap[i].key] = a->input.held[keymap[i].key] = (e.type == SDL_KEYDOWN);
         }
       break;
     case SDL_FINGERDOWN:
@@ -430,16 +428,19 @@ static void main_loop(void* ud) {
   int guard = 0;
   while (a->acc_num >= per_tick && guard++ < 8) {
     a->acc_num -= per_tick;
-    /* compose keyboard + touch into a transient input; never write
-     * the OR back into the persistent keyboard state (that latches) */
-    sr_input eff;
+    /* compose keyboard + touch into one */
     for (int k = 0; k < SR_KEY_COUNT; k++) {
-      eff.held[k] = (uint8_t)(a->input.held[k] || a->touch.held[k]);
-      eff.pressed[k] = (uint8_t)(a->input.pressed[k] || a->touch.pressed[k]);
+      a->input.held[k] |= a->touch.held[k];
+      a->input.pressed[k] |= a->touch.pressed[k];
     }
-    sr_game_tick(&a->game, &eff);
+    sr_game_tick(&a->game, &a->input);
     memset(a->input.pressed, 0, sizeof a->input.pressed);
     memset(a->touch.pressed, 0, sizeof a->touch.pressed);
+    // Make touch input inherit common input state
+    for (int k = 0; k < SR_KEY_COUNT; k++) {
+       a->touch.held[k] = a->input.held[k];
+       a->touch.pressed[k] = a->input.pressed[k];
+    }
     apply_audio(a);
   }
   present(a);

@@ -216,37 +216,62 @@ static void tick_mainmenu(sr_game* g, const sr_input* in) {
   draw_mainmenu(g);
 }
 
+static void handle_held_keys(int* hold_counter, sr_input* in)
+{
+  if (any_pressed(in))
+  {
+    *hold_counter = 0;
+    // first 4 inputs: up, down, left and right
+    for (int i = 0; i < 4; i++)
+    {
+      if (!in->pressed[i])
+        in->held[i] = false;
+    }
+  }
+  if (in->held[SR_KEY_UP] || in->held[SR_KEY_DOWN] || in->held[SR_KEY_LEFT] ||
+      in->held[SR_KEY_RIGHT])
+  {
+    if (*hold_counter < 18)
+    {
+      *hold_counter += 1;
+    }
+    else
+    {
+      for (int i = 0; i < 4; i++)
+      {
+        if (in->held[i])
+          in->pressed[i] = true;
+      }
+    }
+  }
+  else
+  {
+    *hold_counter = 0;
+  }
+}
+
 static void tick_gomenu(sr_game* g, const sr_input* in) {
   /* fn_5164: up/down +-1 clamp, left/right -+15 */
   static int hold_counter = 0;
-  if (any_pressed(in)) {
-    hold_counter = 0;
-  }
-  if (in->held[SR_KEY_UP] || in->held[SR_KEY_DOWN]) {
-    if (hold_counter < 18) {
-      hold_counter++;
-    } else if (in->held[SR_KEY_LEFT] || in->held[SR_KEY_RIGHT]) {
-      if (in->held[SR_KEY_UP])
-        g->go_sel = 0;
-      if (in->held[SR_KEY_DOWN])
-        g->go_sel = 29;
-    } else {
-      if (in->held[SR_KEY_UP] && g->go_sel > 0)
-        g->go_sel--;
-      if (in->held[SR_KEY_DOWN] && g->go_sel < 29)
-        g->go_sel++;
-    }
-  } else {
-    hold_counter = 0;
-  }
+  handle_held_keys(&hold_counter, (sr_input*)in);
   if (in->pressed[SR_KEY_UP] && g->go_sel > 0)
     g->go_sel--;
   if (in->pressed[SR_KEY_DOWN] && g->go_sel < 29)
     g->go_sel++;
-  if (in->pressed[SR_KEY_LEFT] && g->go_sel >= 15)
-    g->go_sel -= 15;
-  if (in->pressed[SR_KEY_RIGHT] && g->go_sel < 15)
-    g->go_sel += 15;
+  if (in->pressed[SR_KEY_LEFT])
+  {
+    if (g->go_sel >= 15)
+      g->go_sel -= 15;
+    else
+      g->go_sel = 0;
+  }
+  if (in->pressed[SR_KEY_RIGHT])
+  {
+    if (g->go_sel < 15)
+      g->go_sel += 15;
+    else
+      g->go_sel = 29;
+  }
   if (in->pressed[SR_KEY_ESC])
     fade_to(g, SR_ST_MAINMENU);
   if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP]) {
@@ -261,21 +286,7 @@ static void tick_gomenu(sr_game* g, const sr_input* in) {
 static void tick_setmenu(sr_game* g, const sr_input* in) {
   int* sel = &g->menu_sel2;
   static int hold_counter = 0;
-  if (any_pressed(in)) {
-    hold_counter = 0;
-  }
-  if (in->held[SR_KEY_LEFT] || in->held[SR_KEY_RIGHT]) {
-    if (hold_counter < 18) {
-      hold_counter++;
-    } else {
-      if (in->held[SR_KEY_LEFT] && *sel > 0)
-        (*sel)--;
-      if (in->held[SR_KEY_RIGHT] && *sel < 4)
-        (*sel)++;
-    }
-  } else {
-    hold_counter = 0;
-  }
+  handle_held_keys(&hold_counter, (sr_input*)in);
   if (in->pressed[SR_KEY_LEFT] && *sel > 0)
     (*sel)--;
   if (in->pressed[SR_KEY_RIGHT] && *sel < 4)
