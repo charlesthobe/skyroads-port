@@ -19,16 +19,19 @@
 static char data_dir[1024] = ".";
 static char pref_dir[1024] = ""; /* writable dir (iOS/Android sandbox) */
 
-static void* read_at(const char* dir, const char* name, size_t* out_size) {
+static void* read_at(const char* dir, const char* name, size_t* out_size)
+{
   char path[1200];
 
   /* try exact name, then upper-case (retail files are upper-case) */
-  for (int attempt = 0; attempt < 2; attempt++) {
+  for (int attempt = 0; attempt < 2; attempt++)
+  {
     char fname[64];
     size_t n = strlen(name);
     if (n >= sizeof fname)
       return NULL;
-    for (size_t i = 0; i <= n; i++) {
+    for (size_t i = 0; i <= n; i++)
+    {
       char c = name[i];
       fname[i] = attempt ? (char)((c >= 'a' && c <= 'z') ? c - 32 : c) : c;
     }
@@ -37,14 +40,16 @@ static void* read_at(const char* dir, const char* name, size_t* out_size) {
     if (!rw)
       continue;
     Sint64 size = SDL_RWsize(rw);
-    if (size <= 0) {
+    if (size <= 0)
+    {
       SDL_RWclose(rw);
       return NULL;
     }
     void* buf = malloc((size_t)size);
     size_t got = SDL_RWread(rw, buf, 1, (size_t)size);
     SDL_RWclose(rw);
-    if (got != (size_t)size) {
+    if (got != (size_t)size)
+    {
       free(buf);
       return NULL;
     }
@@ -54,10 +59,12 @@ static void* read_at(const char* dir, const char* name, size_t* out_size) {
   return NULL;
 }
 
-static void* io_read_file(const char* name, size_t* out_size) {
+static void* io_read_file(const char* name, size_t* out_size)
+{
   /* sandboxed platforms: saved cfg lives in the pref dir, data in the
    * bundle; try the writable location first so saves win */
-  if (pref_dir[0]) {
+  if (pref_dir[0])
+  {
     void* buf = read_at(pref_dir, name, out_size);
     if (buf)
       return buf;
@@ -65,9 +72,11 @@ static void* io_read_file(const char* name, size_t* out_size) {
   return read_at(data_dir, name, out_size);
 }
 
-static bool io_write_file(const char* name, const void* data, size_t size) {
+static bool io_write_file(const char* name, const void* data, size_t size)
+{
   const char* dirs[2] = {data_dir, pref_dir};
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 2; i++)
+  {
     if (!dirs[i][0])
       continue;
     char path[1300];
@@ -83,7 +92,8 @@ static bool io_write_file(const char* name, const void* data, size_t size) {
   return false;
 }
 
-typedef struct {
+typedef struct
+{
   SDL_Window* win;
   SDL_Renderer* ren;
   SDL_Texture* tex;
@@ -104,7 +114,8 @@ typedef struct {
 #define SR_LOGW (SR_SCREEN_W * 6)
 #define SR_LOGH (SR_SCREEN_H * 6 * 6 / 5)
 
-static const struct {
+static const struct
+{
   SDL_Scancode sc;
   int key;
 } keymap[] = {
@@ -127,12 +138,14 @@ static const struct {
  * (d-pad = arrows, button = Enter). Tiny top-left corner = ESC,
  * top-right corner = pause. */
 
-typedef struct {
+typedef struct
+{
   float dx, dy, dr; /* d-pad center + radius, in pixels */
   float jx, jy, jr; /* jump button center + radius */
 } touch_geom;
 
-static touch_geom get_touch_geom(app_t* a) {
+static touch_geom get_touch_geom(app_t* a)
+{
   int w, h;
   SDL_GetWindowSize(a->win, &w, &h);
   touch_geom g;
@@ -147,33 +160,39 @@ static touch_geom get_touch_geom(app_t* a) {
 }
 
 /* Classify a finger position into key flags (writes into out[]). */
-static void touch_classify(app_t* a, float nx, float ny, uint8_t* out) {
+static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
+{
   int w, h;
   SDL_GetWindowSize(a->win, &w, &h);
   float px = nx * (float)w, py = ny * (float)h;
   touch_geom g = get_touch_geom(a);
 
   /* corner taps */
-  if (py < 0.16f * (float)h) {
-    if (px < 0.12f * (float)w) {
+  if (py < 0.16f * (float)h)
+  {
+    if (px < 0.12f * (float)w)
+    {
       out[SR_KEY_ESC] = 1;
       return;
     }
-    if (px > 0.88f * (float)w) {
+    if (px > 0.88f * (float)w)
+    {
       out[SR_KEY_PAUSE] = 1;
       return;
     }
   }
   /* jump button (generous halo) */
   float jdx = px - g.jx, jdy = py - g.jy;
-  if (jdx * jdx + jdy * jdy <= (g.jr * 1.6f) * (g.jr * 1.6f)) {
+  if (jdx * jdx + jdy * jdy <= (g.jr * 1.6f) * (g.jr * 1.6f))
+  {
     out[SR_KEY_JUMP] = 1;
     out[SR_KEY_ENTER] = 1; /* doubles as select in menus */
     return;
   }
   /* d-pad: independent axes -> 8-way with diagonals */
   float ddx = px - g.dx, ddy = py - g.dy;
-  if (ddx * ddx + ddy * ddy <= (g.dr * 1.8f) * (g.dr * 1.8f)) {
+  if (ddx * ddx + ddy * ddy <= (g.dr * 1.8f) * (g.dr * 1.8f))
+  {
     float dead = g.dr * 0.28f;
     if (ddx < -dead)
       out[SR_KEY_LEFT] = 1;
@@ -189,13 +208,16 @@ static void touch_classify(app_t* a, float nx, float ny, uint8_t* out) {
 /* Rebuild held-key state from SDL's authoritative finger list each frame
  * (event-based tracking can wedge when the OS also synthesizes mouse
  * events from touches). */
-static void touch_update_held(app_t* a) {
+static void touch_update_held(app_t* a)
+{
   memset(a->touch.held, 0, sizeof a->touch.held);
   int ndev = SDL_GetNumTouchDevices();
-  for (int d = 0; d < ndev; d++) {
+  for (int d = 0; d < ndev; d++)
+  {
     SDL_TouchID tid = SDL_GetTouchDevice(d);
     int nf = SDL_GetNumTouchFingers(tid);
-    for (int i = 0; i < nf; i++) {
+    for (int i = 0; i < nf; i++)
+    {
       SDL_Finger* f = SDL_GetTouchFinger(tid, i);
       if (f)
         touch_classify(a, f->x, f->y, a->touch.held);
@@ -205,19 +227,26 @@ static void touch_update_held(app_t* a) {
     touch_classify(a, a->mouse_x, a->mouse_y, a->touch.held);
 }
 
-static void pump_events(app_t* a) {
+static void pump_events(app_t* a)
+{
   SDL_Event e;
-  while (SDL_PollEvent(&e)) {
-    switch (e.type) {
+  while (SDL_PollEvent(&e))
+  {
+    switch (e.type)
+    {
     case SDL_QUIT:
       a->quit = true;
       break;
     case SDL_KEYDOWN:
-      if ((e.key.keysym.mod & KMOD_ALT) && e.key.keysym.sym == SDLK_RETURN) {
-        if (SDL_GetWindowFlags(a->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+      if ((e.key.keysym.mod & KMOD_ALT) && e.key.keysym.sym == SDLK_RETURN)
+      {
+        if (SDL_GetWindowFlags(a->win) & SDL_WINDOW_FULLSCREEN_DESKTOP)
+        {
           SDL_SetWindowFullscreen(a->win, 0);
           SDL_ShowCursor(SDL_ENABLE);
-        } else {
+        }
+        else
+        {
           SDL_SetWindowFullscreen(a->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
           SDL_ShowCursor(SDL_DISABLE);
         }
@@ -228,8 +257,10 @@ static void pump_events(app_t* a) {
       if (e.key.repeat)
         break;
       for (size_t i = 0; i < sizeof keymap / sizeof *keymap; i++)
-        if (e.key.keysym.scancode == keymap[i].sc) {
-          a->input.pressed[keymap[i].key] = a->input.held[keymap[i].key] = (e.type == SDL_KEYDOWN);
+        if (e.key.keysym.scancode == keymap[i].sc)
+        {
+          a->input.pressed[keymap[i].key] = a->input.held[keymap[i].key] =
+              (e.type == SDL_KEYDOWN);
         }
       break;
     case SDL_FINGERDOWN:
@@ -239,7 +270,8 @@ static void pump_events(app_t* a) {
     /* real mouse mirrors one finger for desktop testing (touch-derived
      * synthetic mouse events are disabled via SDL hint) */
     case SDL_MOUSEBUTTONDOWN:
-      if (e.button.which != SDL_TOUCH_MOUSEID) {
+      if (e.button.which != SDL_TOUCH_MOUSEID)
+      {
         int w, h;
         SDL_GetWindowSize(a->win, &w, &h);
         a->mouse_down = true;
@@ -249,7 +281,8 @@ static void pump_events(app_t* a) {
       }
       break;
     case SDL_MOUSEMOTION:
-      if (a->mouse_down && e.motion.which != SDL_TOUCH_MOUSEID) {
+      if (a->mouse_down && e.motion.which != SDL_TOUCH_MOUSEID)
+      {
         int w, h;
         SDL_GetWindowSize(a->win, &w, &h);
         a->mouse_x = (float)e.motion.x / (w ? w : 1);
@@ -267,14 +300,16 @@ static void pump_events(app_t* a) {
 
 static void draw_touch_overlay(app_t* a);
 
-static void present(app_t* a) {
+static void present(app_t* a)
+{
   uint32_t pal[256];
   sr_palette_rgba(a->game.out_pal, pal);
 
   void* pixels;
   int pitch;
   SDL_LockTexture(a->tex, NULL, &pixels, &pitch);
-  for (int y = 0; y < SR_SCREEN_H; y++) {
+  for (int y = 0; y < SR_SCREEN_H; y++)
+  {
     uint32_t* row = (uint32_t*)((uint8_t*)pixels + y * pitch);
     const uint8_t* src = a->game.fb.px + y * SR_SCREEN_W;
     for (int x = 0; x < SR_SCREEN_W; x++)
@@ -294,11 +329,13 @@ static void present(app_t* a) {
  * line up 1:1 with the normalized finger zones in pump_events(). */
 
 /* Filled chevron (direction: 0 up,1 down,2 left,3 right) centered at cx,cy. */
-static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a) {
+static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a)
+{
   SDL_Vertex v[3];
   SDL_Color c = {255, 255, 255, a};
   SDL_FPoint p[3];
-  switch (dir) {
+  switch (dir)
+  {
   case 0:
     p[0] = (SDL_FPoint){cx, cy - s};
     p[1] = (SDL_FPoint){cx - s, cy + s};
@@ -320,7 +357,8 @@ static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a) {
     p[2] = (SDL_FPoint){cx - s, cy + s};
     break;
   }
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++)
+  {
     v[i].position = p[i];
     v[i].color = c;
     v[i].tex_coord = (SDL_FPoint){0, 0};
@@ -330,16 +368,19 @@ static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a) {
 
 /* Filled circle via horizontal spans. */
 static void fill_circle(SDL_Renderer* r, float cx, float cy, float rad,
-                        Uint8 rr, Uint8 gg, Uint8 bb, Uint8 aa) {
+                        Uint8 rr, Uint8 gg, Uint8 bb, Uint8 aa)
+{
   SDL_SetRenderDrawColor(r, rr, gg, bb, aa);
   int irad = (int)rad;
-  for (int dy = -irad; dy <= irad; dy++) {
+  for (int dy = -irad; dy <= irad; dy++)
+  {
     float half = SDL_sqrtf(rad * rad - (float)dy * dy);
     SDL_RenderDrawLineF(r, cx - half, cy + dy, cx + half, cy + dy);
   }
 }
 
-static void draw_touch_overlay(app_t* a) {
+static void draw_touch_overlay(app_t* a)
+{
   if (!a->show_touch)
     return;
   /* the simulator/window may be scaled vs window coords; keep both in
@@ -384,26 +425,32 @@ static void draw_touch_overlay(app_t* a) {
   SDL_RenderSetScale(a->ren, 1.0f, 1.0f);
 }
 
-static void audio_cb(void* ud, Uint8* stream, int len) {
+static void audio_cb(void* ud, Uint8* stream, int len)
+{
   app_t* a = ud;
   sr_audio_render(a->audio, (int16_t*)stream, len / 4);
 }
 
-static void apply_audio(app_t* a) {
+static void apply_audio(app_t* a)
+{
   if (!a->adev)
     return;
   if (a->game.want_song != a->cur_song || a->game.sfx_request ||
-      a->game.want_intro_snd) {
+      a->game.want_intro_snd)
+  {
     SDL_LockAudioDevice(a->adev);
-    if (a->game.want_song != a->cur_song) {
+    if (a->game.want_song != a->cur_song)
+    {
       sr_audio_music(a->audio, &a->game.assets, a->game.want_song);
       a->cur_song = a->game.want_song;
     }
-    if (a->game.sfx_request) {
+    if (a->game.sfx_request)
+    {
       sr_audio_sfx(a->audio, &a->game.assets, a->game.sfx_request - 1);
       a->game.sfx_request = 0;
     }
-    if (a->game.want_intro_snd) {
+    if (a->game.want_intro_snd)
+    {
       sr_audio_pcm(a->audio, a->game.assets.intro_snd,
                    a->game.assets.intro_snd_size, 0x5a);
       a->game.want_intro_snd = 0;
@@ -412,7 +459,8 @@ static void apply_audio(app_t* a) {
   }
 }
 
-static void main_loop(void* ud) {
+static void main_loop(void* ud)
+{
   app_t* a = ud;
   pump_events(a);
 
@@ -426,10 +474,12 @@ static void main_loop(void* ud) {
 
   uint64_t per_tick = freq * (uint64_t)SR_TICK_DEN;
   int guard = 0;
-  while (a->acc_num >= per_tick && guard++ < 8) {
+  while (a->acc_num >= per_tick && guard++ < 8)
+  {
     a->acc_num -= per_tick;
     /* compose keyboard + touch into one */
-    for (int k = 0; k < SR_KEY_COUNT; k++) {
+    for (int k = 0; k < SR_KEY_COUNT; k++)
+    {
       a->input.held[k] |= a->touch.held[k];
       a->input.pressed[k] |= a->touch.pressed[k];
     }
@@ -437,9 +487,10 @@ static void main_loop(void* ud) {
     memset(a->input.pressed, 0, sizeof a->input.pressed);
     memset(a->touch.pressed, 0, sizeof a->touch.pressed);
     // Make touch input inherit common input state
-    for (int k = 0; k < SR_KEY_COUNT; k++) {
-       a->touch.held[k] = a->input.held[k];
-       a->touch.pressed[k] = a->input.pressed[k];
+    for (int k = 0; k < SR_KEY_COUNT; k++)
+    {
+      a->touch.held[k] = a->input.held[k];
+      a->touch.pressed[k] = a->input.pressed[k];
     }
     apply_audio(a);
   }
@@ -449,7 +500,8 @@ static void main_loop(void* ud) {
     a->quit = true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   if (argc > 1)
     snprintf(data_dir, sizeof data_dir, "%s", argv[1]);
 #ifdef __EMSCRIPTEN__
@@ -464,7 +516,8 @@ int main(int argc, char** argv) {
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+  {
     fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
     return 1;
   }
@@ -475,12 +528,14 @@ int main(int argc, char** argv) {
 #if (defined(__APPLE__) && TARGET_OS_IPHONE) || defined(__ANDROID__)
   {
     char* base = SDL_GetBasePath();
-    if (base) {
+    if (base)
+    {
       snprintf(data_dir, sizeof data_dir, "%s", base);
       SDL_free(base);
     }
     char* pref = SDL_GetPrefPath("skyroads", "skyroads");
-    if (pref) {
+    if (pref)
+    {
       snprintf(pref_dir, sizeof pref_dir, "%s", pref);
       SDL_free(pref);
     }
@@ -510,7 +565,8 @@ int main(int argc, char** argv) {
 
   char err[256] = "";
   if (!sr_game_init(&a->game, (sr_io){io_read_file, io_write_file}, err,
-                    sizeof err)) {
+                    sizeof err))
+  {
     fprintf(stderr,
             "SkyRoads data files not found (first missing: %s).\n\n"
             "This engine needs the original game's data files (*.LZS, *.DAT,\n"

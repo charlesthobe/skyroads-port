@@ -7,18 +7,21 @@
 
 /* One PICT from a graphics LZS, pixels already rebased (+palette base,
  * 0 stays 0) exactly like the in-game representation. */
-typedef struct {
+typedef struct
+{
   uint16_t screen_ofs; /* y*320+x destination */
   uint16_t w, h;
   uint8_t* pixels; /* w*h */
 } sr_pict;
 
-typedef struct {
+typedef struct
+{
   int base, count;
   sr_rgb6 colors[256];
 } sr_pal_section;
 
-typedef struct {
+typedef struct
+{
   sr_pict* picts;
   int n_picts;
   sr_pal_section sections[8];
@@ -33,7 +36,8 @@ void sr_gfx_apply_pal(const sr_gfxfile* g, sr_rgb6* pal);
 void sr_gfx_apply_section(const sr_gfxfile* g, int idx, sr_rgb6* pal);
 
 /* Road grid: 7 u16 codes per row. */
-typedef struct {
+typedef struct
+{
   uint16_t gravity; /* dash shows (gravity-3)*100 */
   uint16_t word2;   /* fuel-related (see notes) */
   uint16_t word3;   /* oxygen-related */
@@ -42,24 +46,28 @@ typedef struct {
   int rows;
 } sr_road;
 
-typedef struct {
+typedef struct
+{
   uint8_t* data; /* raw_size bytes; LZS payload at tail */
   uint32_t raw_size;
   uint32_t data_ofs; /* raw_size - lzs_size (stored at head u16 too) */
 } sr_trek_obj;
 
-typedef struct {
+typedef struct
+{
   uint16_t screen_ofs;
   uint8_t w, h;
   uint8_t cells[64]; /* w*h values 0..2 */
 } sr_gauge_seg;
 
-typedef struct {
+typedef struct
+{
   uint16_t frame; /* anim frame number this delta belongs to */
   sr_pict pict;
 } sr_anim_rec;
 
-typedef struct sr_assets {
+typedef struct sr_assets
+{
   sr_io io;
 
   /* graphics LZS files, loaded with their in-game palette bases */

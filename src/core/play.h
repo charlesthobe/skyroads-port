@@ -8,7 +8,8 @@
 #include "assets.h"
 #include "sr.h"
 
-enum {
+enum
+{
   SR_RES_RUNNING = -1,
   SR_RES_COMPLETE = 0,
   SR_RES_WALL = 1,
@@ -19,7 +20,8 @@ enum {
   SR_RES_QUIT = 7
 };
 
-typedef struct {
+typedef struct
+{
   const sr_road* road;
   const uint8_t* demo; /* DEMO.REC buffer or NULL */
   size_t demo_size;

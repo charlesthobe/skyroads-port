@@ -5,7 +5,8 @@
 
 #include "sr.h"
 
-typedef struct {
+typedef struct
+{
   const uint8_t* data;
   size_t size;
   size_t next_pos; /* index of byte AFTER the lookahead */

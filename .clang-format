@@ -1,2 +1,3 @@
 PointerAlignment: Left
 ReferenceAlignment: Left
+BreakBeforeBraces: Allman

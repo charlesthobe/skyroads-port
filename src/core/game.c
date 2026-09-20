@@ -8,7 +8,8 @@
 
 /* ------------------------------------------------------------------ init */
 
-static void start_intro(sr_game* g) {
+static void start_intro(sr_game* g)
+{
   g->want_song = 0;
   g->fade = SR_FADE_IN;
   g->fade_t = 0;
@@ -24,7 +25,8 @@ static void start_intro(sr_game* g) {
   g->intro_rec = 0;
 }
 
-bool sr_game_init(sr_game* g, sr_io io, char* err, size_t errlen) {
+bool sr_game_init(sr_game* g, sr_io io, char* err, size_t errlen)
+{
   memset(g, 0, sizeof *g);
   if (!sr_assets_load(&g->assets, io, err, errlen))
     return false;
@@ -42,7 +44,8 @@ bool sr_game_running(const sr_game* g) { return g->state != SR_ST_QUIT; }
 
 /* ------------------------------------------------- state transitions ---- */
 
-static void start_road(sr_game* g, int entry, int demo) {
+static void start_road(sr_game* g, int entry, int demo)
+{
   g->road_entry = entry;
   if (!sr_assets_load_road(&g->assets, entry, &g->road))
     return;
@@ -53,24 +56,29 @@ static void start_road(sr_game* g, int entry, int demo) {
   g->demo_mode = demo ? 1 : 0;
   g->paused = 0;
   g->tick = 0;
-  if (!demo && g->state != SR_ST_DIED) {
+  if (!demo && g->state != SR_ST_DIED)
+  {
     /* gameplay music: random song 2..13, (main 0x29f) */
     static bool seeded = false;
-    if (!seeded) {
+    if (!seeded)
+    {
       srand(time(NULL));
     }
     int song = (rand() % (13 - 2 + 1)) + 2;
     g->want_song = song;
   }
-  if (g->state == SR_ST_DIED) {
+  if (g->state == SR_ST_DIED)
+  {
     g->state = SR_ST_GAME;
   }
 }
 
-static void enter_state(sr_game* g, sr_state st) {
+static void enter_state(sr_game* g, sr_state st)
+{
   g->state = st;
   g->idle_ticks = 0;
-  switch (st) {
+  switch (st)
+  {
   case SR_ST_INTRO:
     start_intro(g);
     break;
@@ -94,7 +102,8 @@ static void enter_state(sr_game* g, sr_state st) {
 }
 
 /* fade out (36 ticks), switch, fade in (36 ticks) — fn_4b72 pacing */
-static void fade_to(sr_game* g, sr_state st) {
+static void fade_to(sr_game* g, sr_state st)
+{
   g->fade = SR_FADE_OUT;
   g->fade_t = 36;
   g->fade_target = st;
@@ -102,7 +111,8 @@ static void fade_to(sr_game* g, sr_state st) {
 
 /* ------------------------------------------------------------- drawing -- */
 
-static void draw_mainmenu(sr_game* g) {
+static void draw_mainmenu(sr_game* g)
+{
   sr_fb_clear(&g->fb, 0);
   if (g->assets.intro.n_picts > 0)
     sr_blit_pict(&g->fb, &g->assets.intro.picts[0], true);
@@ -119,26 +129,31 @@ static void draw_mainmenu(sr_game* g) {
 /* Road entry screen position (fn_5064): base 0xF3E=(62,12), +9 rows per
  * road, +39 per world, +0xA0 right column. Ticks at 0x11F0=(112,14),
  * 7px apart, max 7 (fn_5164). */
-static int gomenu_road_ofs(int rd) {
+static int gomenu_road_ofs(int rd)
+{
   int ofs = 0xF3E + ((rd / 3) % 5) * 39 * 320 + (rd % 3) * 9 * 320;
   if (rd >= 15)
     ofs += 0xA0;
   return ofs;
 }
 
-static void draw_gomenu(sr_game* g) {
+static void draw_gomenu(sr_game* g)
+{
   sr_fb_clear(&g->fb, 0);
   if (g->assets.gomenu.n_picts > 0)
     sr_blit_pict(&g->fb, &g->assets.gomenu.picts[0], true);
   /* completion tick marks (fn_5164 loop) */
-  if (g->assets.gomenu.n_picts > 1) {
-    for (int rd = 0; rd < 30; rd++) {
+  if (g->assets.gomenu.n_picts > 1)
+  {
+    for (int rd = 0; rd < 30; rd++)
+    {
       int n = g->cfg.completions[rd];
       if (n > 7)
         n = 7;
       int ofs = 0x11F0 + ((rd % 15) % 3) * 9 * 320 +
                 ((rd % 15) / 3) * 39 * 320 + (rd >= 15 ? 0xA0 : 0);
-      for (int t = 0; t < n; t++) {
+      for (int t = 0; t < n; t++)
+      {
         sr_pict cur = g->assets.gomenu.picts[1];
         cur.screen_ofs = (uint16_t)(ofs + t * 7);
         sr_blit_pict(&g->fb, &cur, false);
@@ -151,7 +166,8 @@ static void draw_gomenu(sr_game* g) {
   int x_max = x0 + 48;
   int y_max = y0 + 9;
   for (int y = y0; y < y_max; y++)
-    for (int x = x0; x < x_max; x++) {
+    for (int x = x0; x < x_max; x++)
+    {
       if (x > x0 && x < x_max - 1 && y > y0 && y < y_max - 1)
         continue;
       g->fb.px[y * 320 + x] = 0x1;
@@ -162,7 +178,8 @@ static void draw_gomenu(sr_game* g) {
 
 /* ------------------------------------------------------------ state ticks */
 
-static bool any_pressed(const sr_input* in) {
+static bool any_pressed(const sr_input* in)
+{
   for (int i = 0; i < SR_KEY_COUNT; i++)
     if (in->pressed[i])
       return true;
@@ -171,8 +188,10 @@ static bool any_pressed(const sr_input* in) {
 
 /* Intro (fn_4575): fade-in 36, +24 ticks -> INTRO.SND, +37 ticks -> ANIM
  * at 2 ticks/frame (18 fps), then to the menu. Any key skips. */
-static void tick_intro(sr_game* g, const sr_input* in) {
-  if (any_pressed(in)) {
+static void tick_intro(sr_game* g, const sr_input* in)
+{
+  if (any_pressed(in))
+  {
     fade_to(g, SR_ST_MAINMENU);
     return;
   }
@@ -185,27 +204,31 @@ static void tick_intro(sr_game* g, const sr_input* in) {
   uint32_t at = g->intro_t - (24 + 37);
   int frame = (int)(at / 2);
   while (g->intro_rec < g->assets.n_anim &&
-         g->assets.anim[g->intro_rec].frame <= (uint16_t)frame) {
+         g->assets.anim[g->intro_rec].frame <= (uint16_t)frame)
+  {
     sr_blit_pict(&g->fb, &g->assets.anim[g->intro_rec].pict, false);
     g->intro_rec++;
   }
   if (any_pressed(in))
     g->idle_ticks = 0;
-  else if (++g->idle_ticks > 36u * 10) { /* attract demo after 10 s */
+  else if (++g->idle_ticks > 36u * 10)
+  { /* attract demo after 10 s */
     g->idle_ticks = 0;
     g->demo_mode = 2;
     fade_to(g, SR_ST_GAME);
   }
 }
 
-static void tick_mainmenu(sr_game* g, const sr_input* in) {
+static void tick_mainmenu(sr_game* g, const sr_input* in)
+{
   if (in->pressed[SR_KEY_DOWN] && g->menu_sel < 2)
     g->menu_sel++;
   if (in->pressed[SR_KEY_UP] && g->menu_sel > 0)
     g->menu_sel--;
   if (in->pressed[SR_KEY_ESC])
     g->state = SR_ST_QUIT;
-  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP]) {
+  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP])
+  {
     if (g->menu_sel == 0)
       fade_to(g, SR_ST_GOMENU);
     else if (g->menu_sel == 1)
@@ -250,7 +273,8 @@ static void handle_held_keys(int* hold_counter, sr_input* in)
   }
 }
 
-static void tick_gomenu(sr_game* g, const sr_input* in) {
+static void tick_gomenu(sr_game* g, const sr_input* in)
+{
   /* fn_5164: up/down +-1 clamp, left/right -+15 */
   static int hold_counter = 0;
   handle_held_keys(&hold_counter, (sr_input*)in);
@@ -274,7 +298,8 @@ static void tick_gomenu(sr_game* g, const sr_input* in) {
   }
   if (in->pressed[SR_KEY_ESC])
     fade_to(g, SR_ST_MAINMENU);
-  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP]) {
+  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP])
+  {
     g->road_entry = g->go_sel + 1; /* entry 0 = demo road */
     g->demo_mode = 0;
     fade_to(g, SR_ST_GAME);
@@ -283,7 +308,8 @@ static void tick_gomenu(sr_game* g, const sr_input* in) {
 }
 
 /* Settings (fn_4c0e): 0-2 control radio, 3-4 sound on/off. */
-static void tick_setmenu(sr_game* g, const sr_input* in) {
+static void tick_setmenu(sr_game* g, const sr_input* in)
+{
   int* sel = &g->menu_sel2;
   static int hold_counter = 0;
   handle_held_keys(&hold_counter, (sr_input*)in);
@@ -291,19 +317,22 @@ static void tick_setmenu(sr_game* g, const sr_input* in) {
     (*sel)--;
   if (in->pressed[SR_KEY_RIGHT] && *sel < 4)
     (*sel)++;
-  if (in->pressed[SR_KEY_UP]) {
+  if (in->pressed[SR_KEY_UP])
+  {
     if (*sel == 3)
       *sel = 0;
     else if (*sel == 4)
       *sel = 1;
   }
-  if (in->pressed[SR_KEY_DOWN]) {
+  if (in->pressed[SR_KEY_DOWN])
+  {
     if (*sel == 0)
       *sel = 3;
     else if (*sel < 3)
       *sel = 4;
   }
-  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP]) {
+  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP])
+  {
     if (*sel <= 2)
       g->cfg.control = (uint16_t)*sel;
     else
@@ -316,7 +345,8 @@ static void tick_setmenu(sr_game* g, const sr_input* in) {
   sr_fb_clear(&g->fb, 0);
   if (g->assets.setmenu.n_picts > 0)
     sr_blit_pict(&g->fb, &g->assets.setmenu.picts[0], true);
-  switch (g->cfg.control) {
+  switch (g->cfg.control)
+  {
   case 0:
     sr_blit_pict(&g->fb, &g->assets.setmenu.picts[6], false);
     break;
@@ -326,9 +356,12 @@ static void tick_setmenu(sr_game* g, const sr_input* in) {
   case 2:
     sr_blit_pict(&g->fb, &g->assets.setmenu.picts[8], false);
   }
-  if (g->cfg.sound_off) {
+  if (g->cfg.sound_off)
+  {
     sr_blit_pict(&g->fb, &g->assets.setmenu.picts[10], false);
-  } else {
+  }
+  else
+  {
     sr_blit_pict(&g->fb, &g->assets.setmenu.picts[9], false);
   }
   if (*sel < g->assets.setmenu.n_picts)
@@ -337,14 +370,18 @@ static void tick_setmenu(sr_game* g, const sr_input* in) {
   sr_gfx_apply_pal(&g->assets.setmenu, g->cur_pal);
 }
 
-static void tick_help(sr_game* g, const sr_input* in) {
-  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP]) {
-    if (++g->help_page >= g->assets.helpmenu.n_picts) {
+static void tick_help(sr_game* g, const sr_input* in)
+{
+  if (in->pressed[SR_KEY_ENTER] || in->pressed[SR_KEY_JUMP])
+  {
+    if (++g->help_page >= g->assets.helpmenu.n_picts)
+    {
       g->help_page = 0;
       fade_to(g, SR_ST_MAINMENU);
     }
   }
-  if (in->pressed[SR_KEY_ESC]) {
+  if (in->pressed[SR_KEY_ESC])
+  {
     g->help_page = 0;
     fade_to(g, SR_ST_MAINMENU);
   }
@@ -352,7 +389,8 @@ static void tick_help(sr_game* g, const sr_input* in) {
   if (g->help_page < g->assets.helpmenu.n_picts)
     sr_blit_pict(&g->fb, &g->assets.helpmenu.picts[g->help_page], true);
   memset(g->cur_pal, 0, sizeof g->cur_pal);
-  if (g->assets.helpmenu.n_sections > 0) {
+  if (g->assets.helpmenu.n_sections > 0)
+  {
     int s = g->help_page;
     if (s >= g->assets.helpmenu.n_sections)
       s = g->assets.helpmenu.n_sections - 1;
@@ -362,27 +400,35 @@ static void tick_help(sr_game* g, const sr_input* in) {
   }
 }
 
-static void tick_game(sr_game* g, const sr_input* in) {
-  if (g->demo_mode && any_pressed(in)) { /* attract: any key exits */
+static void tick_game(sr_game* g, const sr_input* in)
+{
+  if (g->demo_mode && any_pressed(in))
+  { /* attract: any key exits */
     fade_to(g, SR_ST_MAINMENU);
     return;
   }
 
   /* pause (P): freeze; ESC quits to menu, other key resumes (fn_1f2c) */
-  if (g->paused) {
-    if (in->pressed[SR_KEY_ESC]) {
+  if (g->paused)
+  {
+    if (in->pressed[SR_KEY_ESC])
+    {
       g->paused = 0;
       fade_to(g, SR_ST_GOMENU);
-    } else if (any_pressed(in)) {
+    }
+    else if (any_pressed(in))
+    {
       g->paused = 0;
     }
     return;
   }
-  if (!g->demo_mode && in->pressed[SR_KEY_PAUSE]) {
+  if (!g->demo_mode && in->pressed[SR_KEY_PAUSE])
+  {
     g->paused = 1;
     return;
   }
-  if (in->pressed[SR_KEY_ESC]) { /* result 7 */
+  if (in->pressed[SR_KEY_ESC])
+  { /* result 7 */
     fade_to(g, g->demo_mode ? SR_ST_MAINMENU : SR_ST_GOMENU);
     return;
   }
@@ -390,7 +436,8 @@ static void tick_game(sr_game* g, const sr_input* in) {
   g->tick++;
   sr_play_input(&g->play, in);
   int res = sr_play_tick(&g->play);
-  if (g->play.pending_sfx) {
+  if (g->play.pending_sfx)
+  {
     g->sfx_request = g->play.pending_sfx;
     g->play.pending_sfx = 0;
   }
@@ -403,9 +450,11 @@ static void tick_game(sr_game* g, const sr_input* in) {
   if (res == SR_RES_RUNNING)
     return;
 
-  if (res == SR_RES_COMPLETE) {
+  if (res == SR_RES_COMPLETE)
+  {
     g->roadend_final = false;
-    if (!g->demo_mode) {
+    if (!g->demo_mode)
+    {
       int rd = g->road_entry - 1;
       if (rd >= 0 && rd < 30 && g->cfg.completions[rd] < 0xffff)
         g->cfg.completions[rd]++;
@@ -428,14 +477,17 @@ static void tick_game(sr_game* g, const sr_input* in) {
   fade_to(g, SR_ST_DIED);
 }
 
-static void tick_roadend(sr_game* g) {
+static void tick_roadend(sr_game* g)
+{
   static int counter = 0;
-  if (counter < 36) {
+  if (counter < 36)
+  {
     counter++;
     return;
   }
   counter = 0;
-  if (g->demo_mode) {
+  if (g->demo_mode)
+  {
     fade_to(g, SR_ST_INTRO);
     return;
   }
@@ -447,21 +499,26 @@ static void tick_roadend(sr_game* g) {
 static void game_tick_inner(sr_game* g, const sr_input* in);
 static void apply_fade(sr_game* g);
 
-void sr_game_tick(sr_game* g, const sr_input* in) {
+void sr_game_tick(sr_game* g, const sr_input* in)
+{
   game_tick_inner(g, in);
   apply_fade(g);
 }
 
-static void game_tick_inner(sr_game* g, const sr_input* in) {
+static void game_tick_inner(sr_game* g, const sr_input* in)
+{
   /* fade controller: the original blocks in fn_4b72 while fading */
-  if (g->fade == SR_FADE_OUT) {
-    if (--g->fade_t <= 0) {
+  if (g->fade == SR_FADE_OUT)
+  {
+    if (--g->fade_t <= 0)
+    {
       enter_state(g, g->fade_target);
       g->fade = SR_FADE_IN;
       g->fade_t = 0;
       /* render the new state once so the fade-in has pixels */
       sr_input none = {0};
-      switch (g->state) {
+      switch (g->state)
+      {
       case SR_ST_MAINMENU:
         draw_mainmenu(g);
         break;
@@ -481,14 +538,16 @@ static void game_tick_inner(sr_game* g, const sr_input* in) {
     }
     return;
   }
-  if (g->fade == SR_FADE_IN) {
+  if (g->fade == SR_FADE_IN)
+  {
     if (++g->fade_t >= 36)
       g->fade = SR_FADE_NONE;
     if (g->state != SR_ST_GAME && g->state != SR_ST_INTRO)
       return; /* menus frozen during fades */
   }
 
-  switch (g->state) {
+  switch (g->state)
+  {
   case SR_ST_INTRO:
     tick_intro(g, in);
     break;
@@ -516,9 +575,11 @@ static void game_tick_inner(sr_game* g, const sr_input* in) {
 }
 
 /* fn_4b72/fn_4315: linear DAC scale, t = 100*step/36 percent */
-static void apply_fade(sr_game* g) {
+static void apply_fade(sr_game* g)
+{
   int t;
-  switch (g->fade) {
+  switch (g->fade)
+  {
   case SR_FADE_IN:
     t = g->fade_t;
     break;
@@ -530,7 +591,8 @@ static void apply_fade(sr_game* g) {
     break;
   }
   int pct = t * 100 / 36;
-  for (int i = 0; i < 256; i++) {
+  for (int i = 0; i < 256; i++)
+  {
     g->out_pal[i].r = (uint8_t)(g->cur_pal[i].r * pct / 100);
     g->out_pal[i].g = (uint8_t)(g->cur_pal[i].g * pct / 100);
     g->out_pal[i].b = (uint8_t)(g->cur_pal[i].b * pct / 100);

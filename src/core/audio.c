@@ -37,7 +37,8 @@ static const uint8_t perc_patch[4][11] = {
     {0x01, 0x00, 0xf7, 0xb5, 0x00, 0x4e, 0x00, 0x10, 0x00, 0x00, 0x01},
 };
 
-struct sr_audio {
+struct sr_audio
+{
   opl3_chip chip;
   bool enabled;
 
@@ -62,22 +63,28 @@ struct sr_audio {
   uint32_t sfx_step_fp;
 };
 
-static void oplw(sr_audio* a, uint8_t reg, uint8_t val) {
+static void oplw(sr_audio* a, uint8_t reg, uint8_t val)
+{
   OPL3_WriteRegBuffered(&a->chip, reg, val);
 }
 
 /* ---- driver (0x5889/0x58b1/0x58fd/0x5955/0x59b3/0x59f1) ---------------- */
 
-static void key_off(sr_audio* a, int ch) {
-  if (ch < 6) {
+static void key_off(sr_audio* a, int ch)
+{
+  if (ch < 6)
+  {
     oplw(a, (uint8_t)(0xb0 + ch), 0x00);
-  } else {
+  }
+  else
+  {
     a->rhythm &= (uint8_t)~(0x10 >> (ch - 6));
     oplw(a, 0xbd, a->rhythm);
   }
 }
 
-static void program_instr(sr_audio* a, int ch, int n, const uint8_t* rec11) {
+static void program_instr(sr_audio* a, int ch, int n, const uint8_t* rec11)
+{
   key_off(a, ch);
   a->chan_instr[ch] = (uint8_t)n;
   for (int b = 0; b < 5; b++)
@@ -89,7 +96,8 @@ static void program_instr(sr_audio* a, int ch, int n, const uint8_t* rec11) {
     oplw(a, (uint8_t)(0xc0 + c0_idx[ch]), rec11[10]);
 }
 
-static void opl_reset(sr_audio* a) {
+static void opl_reset(sr_audio* a)
+{
   a->rhythm = 0xe0;
   for (uint8_t r = 0x40; r <= 0x55; r++)
     oplw(a, r, 0x3f);
@@ -97,7 +105,8 @@ static void opl_reset(sr_audio* a) {
     key_off(a, ch);
 }
 
-static void opl_init(sr_audio* a) {
+static void opl_init(sr_audio* a)
+{
   opl_reset(a);
   oplw(a, 0x01, 0x20); /* wave select enable */
   oplw(a, 0x08, 0x00);
@@ -111,9 +120,11 @@ static void opl_init(sr_audio* a) {
   oplw(a, 0xb7, 0x0d);
 }
 
-static void note_on(sr_audio* a, int ch, int note) {
+static void note_on(sr_audio* a, int ch, int note)
+{
   key_off(a, ch);
-  if (ch <= 6) {
+  if (ch <= 6)
+  {
     int phys = c0_idx[ch];
     int block = note / 12 + 2;
     int semi = note % 12;
@@ -129,7 +140,8 @@ static void note_on(sr_audio* a, int ch, int note) {
   oplw(a, 0xbd, a->rhythm);
 }
 
-static void set_volume(sr_audio* a, int ch, int vol) {
+static void set_volume(sr_audio* a, int ch, int vol)
+{
   if (vol > 30)
     vol = 30;
   const uint8_t* rec = a->instr + a->chan_instr[ch] * 16;
@@ -141,7 +153,8 @@ static void set_volume(sr_audio* a, int ch, int vol) {
   if (att > 0x3f)
     att = 0x3f;
   oplw(a, (uint8_t)(0x40 + op), (uint8_t)((v & 0xc0) | att));
-  if (!single && (rec[10] & 1)) { /* additive: modulator too */
+  if (!single && (rec[10] & 1))
+  { /* additive: modulator too */
     v = rec[1];
     att = (uint8_t)((v & 0x3f) + vol_tab[vol]);
     if (att > 0x3f)
@@ -152,20 +165,24 @@ static void set_volume(sr_audio* a, int ch, int vol) {
 
 /* ---- event stream (0x5a39) --------------------------------------------- */
 
-static void music_tick(sr_audio* a) {
+static void music_tick(sr_audio* a)
+{
   if (!a->playing)
     return;
-  if (a->delay) {
+  if (a->delay)
+  {
     a->delay--;
     return;
   }
-  while (a->ev + 1 < a->song_end) {
+  while (a->ev + 1 < a->song_end)
+  {
     uint16_t w = *(uint16_t*)a->ev;
     a->ev += 2;
     int op = w & 7;
     int ch = (w >> 4) & 0xf;
     int param = w >> 8;
-    switch (op) {
+    switch (op)
+    {
     case 0:
       a->delay = (uint8_t)param;
       return;
@@ -199,7 +216,8 @@ static void music_tick(sr_audio* a) {
 
 /* ---- public ------------------------------------------------------------- */
 
-sr_audio* sr_audio_create(void) {
+sr_audio* sr_audio_create(void)
+{
   sr_audio* a = calloc(1, sizeof *a);
   OPL3_Reset(&a->chip, SR_AUDIO_RATE);
   a->enabled = true;
@@ -208,14 +226,17 @@ sr_audio* sr_audio_create(void) {
   return a;
 }
 
-void sr_audio_destroy(sr_audio* a) {
+void sr_audio_destroy(sr_audio* a)
+{
   free(a->sfx_copy);
   free(a);
 }
 
-void sr_audio_set_enabled(sr_audio* a, bool on) {
+void sr_audio_set_enabled(sr_audio* a, bool on)
+{
   a->enabled = on;
-  if (!on) {
+  if (!on)
+  {
     opl_reset(a);
     a->playing = false;
     a->cur_song = -1;
@@ -223,7 +244,8 @@ void sr_audio_set_enabled(sr_audio* a, bool on) {
   }
 }
 
-bool sr_audio_music(sr_audio* a, const sr_assets* assets, int n) {
+bool sr_audio_music(sr_audio* a, const sr_assets* assets, int n)
+{
   if (a->cur_song == n)
     return true;
   opl_reset(a);
@@ -235,14 +257,16 @@ bool sr_audio_music(sr_audio* a, const sr_assets* assets, int n) {
   uint16_t* data = assets->io.read_file("muzax.lzs", &size);
   if (!data)
     return false;
-  if ((size_t)(n * 3 + 3) * sizeof(uint16_t) > size) {
+  if ((size_t)(n * 3 + 3) * sizeof(uint16_t) > size)
+  {
     free(data);
     return false;
   }
   uint16_t off = data[n * 3];
   uint16_t ninst = data[n * 3 + 1];
   uint16_t raw = data[n * 3 + 2];
-  if (off == 0 || raw == 0 || raw > sizeof a->song) {
+  if (off == 0 || raw == 0 || raw > sizeof a->song)
+  {
     free(data);
     return false;
   }
@@ -260,13 +284,15 @@ bool sr_audio_music(sr_audio* a, const sr_assets* assets, int n) {
   return true;
 }
 
-void sr_audio_music_stop(sr_audio* a) {
+void sr_audio_music_stop(sr_audio* a)
+{
   opl_reset(a);
   a->playing = false;
   a->cur_song = -1;
 }
 
-void sr_audio_pcm(sr_audio* a, const uint8_t* pcm, size_t len, int tc) {
+void sr_audio_pcm(sr_audio* a, const uint8_t* pcm, size_t len, int tc)
+{
   if (!a->enabled || !pcm || !len)
     return;
   free(a->sfx_copy);
@@ -279,7 +305,8 @@ void sr_audio_pcm(sr_audio* a, const uint8_t* pcm, size_t len, int tc) {
   a->sfx_step_fp = (uint32_t)(((uint64_t)rate << 16) / SR_AUDIO_RATE);
 }
 
-void sr_audio_sfx(sr_audio* a, const sr_assets* assets, int n) {
+void sr_audio_sfx(sr_audio* a, const sr_assets* assets, int n)
+{
   if (!a->enabled)
     return;
   size_t size;
@@ -288,13 +315,15 @@ void sr_audio_sfx(sr_audio* a, const sr_assets* assets, int n) {
   if (!data)
     return;
   uint16_t count = params[0] / 2 - 1;
-  if (n < 0 || n >= count) {
+  if (n < 0 || n >= count)
+  {
     free(data);
     return;
   }
   uint16_t off = params[n];
   uint16_t next = params[n + 1];
-  if (next > size || off >= next) {
+  if (next > size || off >= next)
+  {
     free(data);
     return;
   }
@@ -302,10 +331,13 @@ void sr_audio_sfx(sr_audio* a, const sr_assets* assets, int n) {
   free(data);
 }
 
-void sr_audio_render(sr_audio* a, int16_t* stereo, int frames) {
+void sr_audio_render(sr_audio* a, int16_t* stereo, int frames)
+{
   const int per_tick = SR_AUDIO_RATE * 6628 / 1193182; /* 180.02 Hz */
-  for (int i = 0; i < frames; i++) {
-    if (a->tick_acc <= 0) {
+  for (int i = 0; i < frames; i++)
+  {
+    if (a->tick_acc <= 0)
+    {
       music_tick(a);
       a->tick_acc += per_tick;
     }
@@ -314,11 +346,15 @@ void sr_audio_render(sr_audio* a, int16_t* stereo, int frames) {
     OPL3_GenerateResampled(&a->chip, buf);
     float vol_modifier = 1;
     int32_t l = buf[0] * vol_modifier, r = buf[1] * vol_modifier;
-    if (a->sfx_data) {
+    if (a->sfx_data)
+    {
       uint32_t pos = a->sfx_pos_fp >> 16;
-      if (pos >= a->sfx_len) {
+      if (pos >= a->sfx_len)
+      {
         a->sfx_data = NULL;
-      } else {
+      }
+      else
+      {
         int32_t s = ((int32_t)a->sfx_data[pos] - 128) << 7;
         l += s;
         r += s;

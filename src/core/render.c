@@ -5,7 +5,8 @@
 
 /* ---- TREKDAT second-stage expansion (fn_3a7a) -------------------------- */
 
-static uint8_t* expand_obj(const sr_trek_obj* o) {
+static uint8_t* expand_obj(const sr_trek_obj* o)
+{
   uint8_t* out = malloc(o->raw_size);
   if (!out)
     return NULL;
@@ -16,11 +17,13 @@ static uint8_t* expand_obj(const sr_trek_obj* o) {
   memcpy(dst, src, 0x270); /* directory */
   src += 0x270;
   dst += 0x270;
-  for (int rec = 0; rec < 0x410 && src < end; rec++) {
+  for (int rec = 0; rec < 0x410 && src < end; rec++)
+  {
     *dst++ = *src++; /* color */
     *dst++ = *src++; /* anchor lo */
     *dst++ = *src++; /* anchor hi */
-    for (;;) {
+    for (;;)
+    {
       uint8_t b = *src++;
       *dst++ = b;
       if (b == 0xFF)
@@ -32,11 +35,13 @@ static uint8_t* expand_obj(const sr_trek_obj* o) {
   return out;
 }
 
-bool sr_render_init(sr_render* r, const sr_assets* a) {
+bool sr_render_init(sr_render* r, const sr_assets* a)
+{
   memset(r, 0, sizeof *r);
   if (a->n_trek < 8)
     return false;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 8; i++)
+  {
     r->exp[i] = expand_obj(&a->trek[i]);
     if (!r->exp[i])
       return false;
@@ -44,23 +49,28 @@ bool sr_render_init(sr_render* r, const sr_assets* a) {
   return true;
 }
 
-void sr_render_free(sr_render* r) {
+void sr_render_free(sr_render* r)
+{
   for (int i = 0; i < 8; i++)
     free(r->exp[i]);
 }
 
-void sr_render_set_world(sr_render* r, const sr_assets* a) {
+void sr_render_set_world(sr_render* r, const sr_assets* a)
+{
   memset(r->pristine, 0, sizeof r->pristine);
-  if (a->world.n_picts > 0) {
+  if (a->world.n_picts > 0)
+  {
     const sr_pict* w = &a->world.picts[0];
     for (int y = 0; y < w->h && y < SR_SCREEN_H; y++)
       memcpy(r->pristine + y * 320, w->pixels + (size_t)y * w->w, w->w);
   }
-  if (a->dashbrd.n_picts > 0) {
+  if (a->dashbrd.n_picts > 0)
+  {
     const sr_pict* d = &a->dashbrd.picts[0];
     int y0 = d->screen_ofs / 320, x0 = d->screen_ofs % 320;
     for (int y = 0; y < d->h; y++)
-      for (int x = 0; x < d->w; x++) {
+      for (int x = 0; x < d->w; x++)
+      {
         uint8_t c = d->pixels[(size_t)y * d->w + x];
         if (c)
           r->pristine[(y0 + y) * 320 + x0 + x] = c;
@@ -70,7 +80,8 @@ void sr_render_set_world(sr_render* r, const sr_assets* a) {
 
 /* ---- span fills (0x3137 left / 0x3174 right) --------------------------- */
 
-typedef struct {
+typedef struct
+{
   uint8_t* vp;        /* fb pixels + 32*320 (viewport bias) */
   const uint8_t* obj; /* current phase object */
   const uint8_t* si;  /* record cursor */
@@ -78,24 +89,29 @@ typedef struct {
 
 /* One record: color k, anchor, spans. half=0 left, 1 right (mirrored).
  * color_override: 0 = use record color, else patched color. */
-static void fill_record(fillctx* c, int half, int color_override) {
+static void fill_record(fillctx* c, int half, int color_override)
+{
   uint8_t k = *c->si++;
   if (color_override)
     k = (uint8_t)color_override;
   uint8_t fill = sr_quad_color[k < 74 ? k : 0][half];
   uint16_t anchor = *(uint16_t*)c->si; // [0] | [1] << 8
   c->si += 2;
-  for (;;) {
+  for (;;)
+  {
     uint8_t off = *c->si++;
     if (off == 0xFF)
       break;
     uint8_t len = *c->si++;
     c->si++; /* pad */
-    if (half == 0) {
+    if (half == 0)
+    {
       int di = anchor - off;
       for (int i = 0; i < len; i++)
         c->vp[di + i] = fill;
-    } else {
+    }
+    else
+    {
       int di = anchor - 1 + off;
       for (int i = 0; i < len; i++)
         c->vp[di - i] = fill;
@@ -106,7 +122,8 @@ static void fill_record(fillctx* c, int half, int color_override) {
 
 static void skip_record(fillctx* c) /* fn_31b5 */
 {
-  do {
+  do
+  {
     c->si += 3;
   } while (*c->si != 0xFF);
   c->si++;
@@ -114,7 +131,8 @@ static void skip_record(fillctx* c) /* fn_31b5 */
 
 /* ---- composers (jump table ds:0xb7f) ----------------------------------- */
 
-typedef struct {
+typedef struct
+{
   fillctx f;
   const uint8_t* dir; /* directory cell (6 u16 record offsets) */
   uint16_t tile;      /* current grid tile */
@@ -123,7 +141,8 @@ typedef struct {
   int half;
 } compctx;
 
-static void seek_kind(compctx* cc, int kind) {
+static void seek_kind(compctx* cc, int kind)
+{
   uint16_t* dir = (uint16_t*)cc->dir;
   uint16_t off = dir[kind];
   cc->f.si = cc->f.obj + off;
@@ -146,7 +165,8 @@ static void compose_floor(compctx* cc) /* fn_2e50 */
     fill_record(&cc->f, cc->half, c + 0xf); /* front edge */
 }
 
-static int blockcolor(uint16_t t) {
+static int blockcolor(uint16_t t)
+{
   int c = (t >> 4) & 0xf;
   return c ? c : 0x3d;
 }
@@ -154,7 +174,8 @@ static int blockcolor(uint16_t t) {
 static void compose_lowblock(compctx* cc) /* 0x2e9f */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 3);
     fill_record(&cc->f, cc->half, 0); /* top faces */
   }
@@ -167,7 +188,8 @@ static void compose_lowblock(compctx* cc) /* 0x2e9f */
 static void compose_tun_low(compctx* cc) /* 0x2ee1 */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x41); /* entrance */
   }
@@ -175,7 +197,8 @@ static void compose_tun_low(compctx* cc) /* 0x2ee1 */
   fill_record(&cc->f, cc->half, blockcolor(cc->tile));
   if (shape(cc->inner) < 2)
     fill_record(&cc->f, cc->half, 0);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 3);
     skip_record(&cc->f);              /* Tunnel opening */
     fill_record(&cc->f, cc->half, 0); /* Tunnel ceiling */
@@ -186,7 +209,8 @@ static void compose_tun_low(compctx* cc) /* 0x2ee1 */
 static void compose_highblock(compctx* cc) /* 0x2f3c */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 3);
     fill_record(&cc->f, cc->half, 0);
   }
@@ -207,14 +231,16 @@ static void compose_highblock(compctx* cc) /* 0x2f3c */
 static void compose_tunnel(compctx* cc) /* 0x303d */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 1) {
+  if (shape(cc->nearer) < 1)
+  {
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x43); /* front wall */
   }
   seek_kind(cc, 4);
   for (int i = 0; i < 6; i++)
     fill_record(&cc->f, cc->half, 0); /* arch gradient */
-  if (shape(cc->nearer) < 1) {
+  if (shape(cc->nearer) < 1)
+  {
     fill_record(&cc->f, cc->half, 0); /* inner rim x2 */
     fill_record(&cc->f, cc->half, 0);
   }
@@ -223,7 +249,8 @@ static void compose_tunnel(compctx* cc) /* 0x303d */
 static void compose_tun_high(compctx* cc) /* 0x2fb0 */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x41);
   }
@@ -232,7 +259,8 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
   if (shape(cc->inner) < 2)
     fill_record(&cc->f, cc->half, 0);
   seek_kind(cc, 4);
-  if (shape(cc->nearer) < 2) {
+  if (shape(cc->nearer) < 2)
+  {
     seek_kind(cc, 3);
     skip_record(&cc->f);              /* Tunnel opening */
     fill_record(&cc->f, cc->half, 0); /* Tunnel ceiling */
@@ -248,8 +276,10 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
     fill_record(&cc->f, cc->half, 0);
 }
 
-static void compose_tile(compctx* cc) {
-  switch (shape(cc->tile)) {
+static void compose_tile(compctx* cc)
+{
+  switch (shape(cc->tile))
+  {
   case 0:
     compose_floor(cc);
     break;
@@ -275,7 +305,8 @@ static void compose_tile(compctx* cc) {
 
 /* ---- ship sprite + shadow ---------------------------------------------- */
 
-static int cowl_hidden(int x, int y) {
+static int cowl_hidden(int x, int y)
+{
   if (y < 0 || y > 137)
     return 1;
   uint16_t hw = sr_cowl[y];
@@ -284,9 +315,11 @@ static int cowl_hidden(int x, int y) {
   return x > 160 - (int)hw && x < 160 + (int)hw;
 }
 
-static void draw_ship(sr_fb* fb, const uint8_t* cell, int left, int top) {
-  for (int j = 0; j < 29; j++)     /* screen columns */
-    for (int i = 0; i < 24; i++) { /* screen rows */
+static void draw_ship(sr_fb* fb, const uint8_t* cell, int left, int top)
+{
+  for (int j = 0; j < 29; j++) /* screen columns */
+    for (int i = 0; i < 24; i++)
+    { /* screen rows */
       uint8_t px = cell[j * 24 + i];
       if (!px)
         continue;
@@ -297,13 +330,15 @@ static void draw_ship(sr_fb* fb, const uint8_t* cell, int left, int top) {
     }
 }
 
-static void draw_shadow(sr_fb* fb, int left, int top, int clearance) {
+static void draw_shadow(sr_fb* fb, int left, int top, int clearance)
+{
   int map = clearance / 5;
   if (map < 0 || map >= 5)
     return;
   const uint8_t* stencil = sr_shadow[map];
   for (int i = 0; i < 9; i++)
-    for (int j = 0; j < 29; j++) {
+    for (int j = 0; j < 29; j++)
+    {
       if (!stencil[i * 29 + j])
         continue;
       int x = left + j, y = top + i;
@@ -318,7 +353,8 @@ static void draw_shadow(sr_fb* fb, int left, int top, int clearance) {
 }
 
 /* ground support height for the shadow (fn_0b71) */
-static uint16_t support(const sr_play* p, uint32_t z, uint16_t x, int in_tun) {
+static uint16_t support(const sr_play* p, uint32_t z, uint16_t x, int in_tun)
+{
   uint16_t t = sr_tile_at(p, z, x);
   int sh = (t >> 8) & 0xf;
   if (sh >= 2 && sh <= 5)
@@ -331,7 +367,8 @@ static uint16_t support(const sr_play* p, uint32_t z, uint16_t x, int in_tun) {
 /* ---- frame -------------------------------------------------------------- */
 
 void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
-                     const sr_play* p, uint32_t tick, int on_sticky) {
+                     const sr_play* p, uint32_t tick, int on_sticky)
+{
   /* full repaint from pristine (pixel-equal to restore+incremental) */
   memcpy(fb->px, r->pristine, sizeof fb->px);
 
@@ -344,13 +381,17 @@ void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
   if (tilt > 6)
     tilt = 6;
   int sprite;
-  if (p->expl_ctr) {
+  if (p->expl_ctr)
+  {
     sprite = p->expl_ctr / 3;
     if (sprite >= 14)
       sprite = -1;
-  } else {
+  }
+  else
+  {
     int pitch = 0;
-    if (!in_tun) {
+    if (!in_tun)
+    {
       if (p->yvel <= -0x163 || p->y < 0x2800)
         pitch = 2;
       else if (p->yvel >= 0x163)
@@ -371,42 +412,51 @@ void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
   const uint8_t* obj = r->exp[pos & 7];
   int baserow = pos >> 3;
 
-  for (int dr = 0; dr < 10; dr++) {
+  for (int dr = 0; dr < 10; dr++)
+  {
     int grow = baserow + 7 - dr; /* grid row for this band */
     int dirrow = dr;
     int ship_row = (dr == 7);
     int dirbases[2];
     int nbases = 1;
     dirbases[0] = dirrow * 0x30;
-    if (ship_row) {
+    if (ship_row)
+    {
       dirbases[0] = 0x210; /* pre-ship */
       dirbases[1] = 0x240; /* post-ship */
       nbases = 2;
     }
-    for (int b = 0; b < nbases; b++) {
-      if (ship_row && b == 1 && sprite >= 0) {
+    for (int b = 0; b < nbases; b++)
+    {
+      if (ship_row && b == 1 && sprite >= 0)
+      {
         /* ship drawn between pre- and post-ship geometry */
         const sr_pict* cars = &a->cars.picts[0];
         const uint8_t* cell = cars->pixels + (size_t)sprite * 0x2d0;
         int top = 0x9d - alt;
         int left = ship_x - 0x6e;
         draw_ship(fb, cell, left, top);
-        if (!p->expl_ctr) {
+        if (!p->expl_ctr)
+        {
           uint16_t g1 = support(p, p->z, (uint16_t)(p->x - 0x380), in_tun);
           uint16_t g2 = support(p, p->z, (uint16_t)(p->x + 0x380), in_tun);
           uint16_t g = g1 > g2 ? g1 : g2;
-          if (g) {
+          if (g)
+          {
             int clearance = (p->y - g) / 0x80;
             if (clearance >= 0)
               draw_shadow(fb, left, top + 0x10 + clearance, clearance);
           }
         }
       }
-      for (int half = 0; half < 2; half++) {
-        for (int ci = 0; ci < 4; ci++) {
+      for (int half = 0; half < 2; half++)
+      {
+        for (int ci = 0; ci < 4; ci++)
+        {
           int gcol = half == 0 ? ci : 6 - ci;
           uint16_t tile = 0, nearer = 0, inner = 0;
-          if (grow >= 0 && grow < 500) {
+          if (grow >= 0 && grow < 500)
+          {
             const uint16_t* row = p->road->cells + grow * 7;
             tile = row[gcol];
             int in_col = half == 0 ? gcol + 1 : gcol - 1;

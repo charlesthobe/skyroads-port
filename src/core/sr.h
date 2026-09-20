@@ -23,7 +23,8 @@
 #define SR_TICK_NUM 1193182u /* PIT base Hz */
 #define SR_TICK_DEN (6628u * 5u)
 
-enum {
+enum
+{
   SR_KEY_UP,
   SR_KEY_DOWN,
   SR_KEY_LEFT,
@@ -39,20 +40,23 @@ enum {
   SR_KEY_COUNT
 };
 
-typedef struct {
+typedef struct
+{
   uint8_t held[SR_KEY_COUNT]; /* bit0: currently held */
   /* edge-triggered presses appended by platform between ticks */
   uint8_t pressed[SR_KEY_COUNT];
 } sr_input;
 
-typedef struct {
+typedef struct
+{
   uint8_t r, g, b; /* 6-bit VGA DAC values 0..63 */
 } sr_rgb6;
 
 typedef struct sr_game sr_game;
 
 /* Platform-supplied file access (so web/iOS bundles can redirect). */
-typedef struct {
+typedef struct
+{
   /* Read whole file into a malloc'd buffer; returns NULL if missing. */
   void* (*read_file)(const char* name, size_t* out_size);
   /* Persist a small file (skyroads.cfg); may be NULL (no persistence). */

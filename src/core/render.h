@@ -10,7 +10,8 @@
 #include "play.h"
 #include "sr.h"
 
-typedef struct {
+typedef struct
+{
   uint8_t* exp[8]; /* expanded phase objects (fn_3a7a) */
   uint8_t pristine[SR_SCREEN_W * SR_SCREEN_H]; /* backdrop + dashboard */
 } sr_render;

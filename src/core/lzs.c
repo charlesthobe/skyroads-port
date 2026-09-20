@@ -1,6 +1,7 @@
 #include "lzs.h"
 
-void lzs_init(lzs_stream* s, const uint8_t* data, size_t size, size_t start) {
+void lzs_init(lzs_stream* s, const uint8_t* data, size_t size, size_t start)
+{
   s->data = data;
   s->size = size;
   s->next_pos = start + 1;
@@ -8,38 +9,46 @@ void lzs_init(lzs_stream* s, const uint8_t* data, size_t size, size_t start) {
   s->bits = 8;
 }
 
-void lzs_advance(lzs_stream* s) {
+void lzs_advance(lzs_stream* s)
+{
   s->cur = s->next_pos < s->size ? s->data[s->next_pos] : 0;
   s->next_pos++;
 }
 
-uint8_t lzs_byte(lzs_stream* s) {
+uint8_t lzs_byte(lzs_stream* s)
+{
   uint8_t r = s->cur;
   lzs_advance(s);
   return r;
 }
 
-uint16_t lzs_u16(lzs_stream* s) {
+uint16_t lzs_u16(lzs_stream* s)
+{
   uint16_t r;
   // Current "cur" is valid, check if "next_pos" is valid.
-  if (s->next_pos < s->size) {
+  if (s->next_pos < s->size)
+  {
     r = *(uint16_t*)(s->data + s->next_pos - 1);
-  } else
+  }
+  else
     return 0;
   s->next_pos += 2;
   s->cur = s->data[s->next_pos - 1];
   return r;
 }
 
-void lzs_raw(lzs_stream* s, uint8_t* dst, size_t n) {
+void lzs_raw(lzs_stream* s, uint8_t* dst, size_t n)
+{
   while (n--)
     *dst++ = lzs_byte(s);
 }
 
-static int lzs_bit(lzs_stream* s) {
+static int lzs_bit(lzs_stream* s)
+{
   int bit = (s->cur >> 7) & 1;
   s->cur = (uint8_t)(s->cur << 1);
-  if (--s->bits == 0) {
+  if (--s->bits == 0)
+  {
     s->bits = 8;
     s->cur = s->next_pos < s->size ? s->data[s->next_pos] : 0;
     s->next_pos++;
@@ -47,32 +56,41 @@ static int lzs_bit(lzs_stream* s) {
   return bit;
 }
 
-uint32_t lzs_bits(lzs_stream* s, int n) {
+uint32_t lzs_bits(lzs_stream* s, int n)
+{
   uint32_t v = 0;
   for (int i = n - 1; i >= 0; i--)
     v |= (uint32_t)lzs_bit(s) << i;
   return v;
 }
 
-void lzs_flush(lzs_stream* s) {
+void lzs_flush(lzs_stream* s)
+{
   if (s->bits != 8)
     lzs_bits(s, s->bits);
 }
 
-void lzs_decompress(lzs_stream* s, uint8_t* dst, size_t size) {
+void lzs_decompress(lzs_stream* s, uint8_t* dst, size_t size)
+{
   int len_bits = lzs_byte(s);
   int off_bits = lzs_byte(s);
   uint32_t far_bias = 1u << off_bits;
   int far_bits = lzs_byte(s);
   size_t out = 0;
 
-  while (out < size) {
+  while (out < size)
+  {
     uint32_t dist;
-    if (lzs_bit(s) == 0) {
+    if (lzs_bit(s) == 0)
+    {
       dist = lzs_bits(s, off_bits);
-    } else if (lzs_bit(s) == 0) {
+    }
+    else if (lzs_bit(s) == 0)
+    {
       dist = lzs_bits(s, far_bits) + far_bias;
-    } else {
+    }
+    else
+    {
       dst[out++] = (uint8_t)lzs_bits(s, 8);
       continue;
     }

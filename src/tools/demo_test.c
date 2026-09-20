@@ -10,14 +10,17 @@
 
 static const char* g_dir;
 
-static void* io_read_file(const char* name, size_t* out_size) {
+static void* io_read_file(const char* name, size_t* out_size)
+{
   char path[1200], upper[64];
   size_t n = strlen(name);
-  for (size_t i = 0; i <= n; i++) {
+  for (size_t i = 0; i <= n; i++)
+  {
     char c = name[i];
     upper[i] = (char)((c >= 'a' && c <= 'z') ? c - 32 : c);
   }
-  for (int attempt = 0; attempt < 2; attempt++) {
+  for (int attempt = 0; attempt < 2; attempt++)
+  {
     snprintf(path, sizeof path, "%s/%s", g_dir, attempt ? upper : name);
     FILE* f = fopen(path, "rb");
     if (!f)
@@ -26,7 +29,8 @@ static void* io_read_file(const char* name, size_t* out_size) {
     long size = ftell(f);
     fseek(f, 0, SEEK_SET);
     void* buf = malloc((size_t)size);
-    if (fread(buf, 1, (size_t)size, f) != (size_t)size) {
+    if (fread(buf, 1, (size_t)size, f) != (size_t)size)
+    {
       fclose(f);
       free(buf);
       return NULL;
@@ -38,8 +42,10 @@ static void* io_read_file(const char* name, size_t* out_size) {
   return NULL;
 }
 
-static const char* resname(int r) {
-  switch (r) {
+static const char* resname(int r)
+{
+  switch (r)
+  {
   case SR_RES_COMPLETE:
     return "COMPLETE";
   case SR_RES_WALL:
@@ -57,16 +63,19 @@ static const char* resname(int r) {
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   g_dir = argc > 1 ? argv[1] : ".";
   sr_assets* a = calloc(1, sizeof *a);
   char err[256];
-  if (!sr_assets_load(a, (sr_io){io_read_file, NULL}, err, sizeof err)) {
+  if (!sr_assets_load(a, (sr_io){io_read_file, NULL}, err, sizeof err))
+  {
     fprintf(stderr, "load: %s\n", err);
     return 1;
   }
   sr_road road;
-  if (!sr_assets_load_road(a, 0, &road)) {
+  if (!sr_assets_load_road(a, 0, &road))
+  {
     fprintf(stderr, "road 0 load failed\n");
     return 1;
   }
@@ -81,7 +90,8 @@ int main(int argc, char** argv) {
   FILE* csv = fopen("/tmp/sr_truth/mysim.csv", "w");
   int res = SR_RES_RUNNING;
   int t = 0;
-  for (; t < 36 * 240 && res == SR_RES_RUNNING; t++) {
+  for (; t < 36 * 240 && res == SR_RES_RUNNING; t++)
+  {
     sr_input dummy = {0};
     sr_play_input(p, &dummy); /* demo mode */
     int row = (int)(p->z >> 16);

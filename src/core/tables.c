@@ -3,7 +3,7 @@
 #include "tables.h"
 
 const uint8_t sr_quad_color[74][4] = {
-  // clang-format off
+    // clang-format off
   {0, 0, 0, 0},
   {1, 1, 6, 6},
   {2, 2, 2, 2},
@@ -78,20 +78,20 @@ const uint8_t sr_quad_color[74][4] = {
   {68, 69, 10, 2},
   {69, 70, 10, 2},
   {70, 71, 10, 2}
-  // clang-format on
+    // clang-format on
 };
 const uint16_t sr_cowl[138] = {
-  // clang-format off
+    // clang-format off
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   89, 111, 123, 133, 138, 143, 148, 153, 158
-  // clang-format on
+    // clang-format on
 };
-const int16_t sr_pan[7] = { -1, -1, -1, 0, 1, 2, 4 };
-const uint8_t sr_heightclass[8] = { 1, 2, 3, 3, 4, 4, 1, 1 };
+const int16_t sr_pan[7] = {-1, -1, -1, 0, 1, 2, 4};
+const uint8_t sr_heightclass[8] = {1, 2, 3, 3, 4, 4, 1, 1};
 const uint8_t sr_shadow[5][261] = {
     // clang-format off
   {0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,

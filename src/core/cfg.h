@@ -9,7 +9,8 @@
 
 #include "sr.h"
 
-typedef struct {
+typedef struct
+{
   uint16_t control;
   uint16_t sound_off;
   uint16_t completions[30];

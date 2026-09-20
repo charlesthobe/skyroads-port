@@ -10,17 +10,20 @@ static uint16_t checksum(const uint16_t* words) /* words[1..32] */
   return sum;
 }
 
-void sr_cfg_load(sr_cfg* c, const sr_io* io) {
+void sr_cfg_load(sr_cfg* c, const sr_io* io)
+{
   memset(c, 0, sizeof *c);
   size_t size;
   uint16_t* d = io->read_file("skyroads.cfg", &size);
   if (!d)
     return;
-  if (size >= 66) {
+  if (size >= 66)
+  {
     uint16_t w[33];
     for (int i = 0; i < 33; i++)
       w[i] = d[i];
-    if (checksum(w) == w[0]) {
+    if (checksum(w) == w[0])
+    {
       c->control = w[1];
       c->sound_off = w[2];
       for (int i = 0; i < 30; i++)
@@ -30,7 +33,8 @@ void sr_cfg_load(sr_cfg* c, const sr_io* io) {
   free(d);
 }
 
-void sr_cfg_save(const sr_cfg* c, const sr_io* io) {
+void sr_cfg_save(const sr_cfg* c, const sr_io* io)
+{
   if (!io->write_file)
     return;
   uint16_t w[33];
@@ -40,7 +44,8 @@ void sr_cfg_save(const sr_cfg* c, const sr_io* io) {
     w[3 + i] = c->completions[i];
   w[0] = checksum(w);
   uint8_t d[66];
-  for (int i = 0; i < 33; i++) {
+  for (int i = 0; i < 33; i++)
+  {
     d[i * 2] = (uint8_t)(w[i] & 0xff);
     d[i * 2 + 1] = (uint8_t)(w[i] >> 8);
   }

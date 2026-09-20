@@ -5,7 +5,8 @@
 #include "assets.h"
 #include "sr.h"
 
-typedef struct {
+typedef struct
+{
   uint8_t px[SR_SCREEN_W * SR_SCREEN_H];
 } sr_fb;
 

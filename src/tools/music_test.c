@@ -6,14 +6,17 @@
 #include <sys/stat.h>
 
 static const char* g_dir;
-static void* io_read_file(const char* name, size_t* out_size) {
+static void* io_read_file(const char* name, size_t* out_size)
+{
   char path[1200], upper[64];
   size_t n = strlen(name);
-  for (size_t i = 0; i <= n; i++) {
+  for (size_t i = 0; i <= n; i++)
+  {
     char c = name[i];
     upper[i] = (char)((c >= 'a' && c <= 'z') ? c - 32 : c);
   }
-  for (int attempt = 0; attempt < 2; attempt++) {
+  for (int attempt = 0; attempt < 2; attempt++)
+  {
     snprintf(path, sizeof path, "%s/%s", g_dir, attempt ? upper : name);
     FILE* f = fopen(path, "rb");
     if (!f)
@@ -22,7 +25,8 @@ static void* io_read_file(const char* name, size_t* out_size) {
     long size = ftell(f);
     fseek(f, 0, SEEK_SET);
     void* buf = malloc((size_t)size);
-    if (fread(buf, 1, (size_t)size, f) != (size_t)size) {
+    if (fread(buf, 1, (size_t)size, f) != (size_t)size)
+    {
       fclose(f);
       free(buf);
       return NULL;
@@ -34,17 +38,20 @@ static void* io_read_file(const char* name, size_t* out_size) {
   return NULL;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   g_dir = argc > 1 ? argv[1] : ".";
   int song = argc > 2 ? atoi(argv[2]) : 1;
   sr_assets* as = calloc(1, sizeof *as);
   char err[256];
-  if (!sr_assets_load(as, (sr_io){io_read_file, NULL}, err, sizeof err)) {
+  if (!sr_assets_load(as, (sr_io){io_read_file, NULL}, err, sizeof err))
+  {
     fprintf(stderr, "%s\n", err);
     return 1;
   }
   sr_audio* a = sr_audio_create();
-  if (!sr_audio_music(a, as, song)) {
+  if (!sr_audio_music(a, as, song))
+  {
     fprintf(stderr, "song load failed\n");
     return 1;
   }
@@ -55,7 +62,8 @@ int main(int argc, char** argv) {
 
   double rms = 0;
   int16_t peak = 0;
-  for (int i = 0; i < frames * 2; i++) {
+  for (int i = 0; i < frames * 2; i++)
+  {
     rms += (double)buf[i] * buf[i];
     if (abs(buf[i]) > peak)
       peak = (int16_t)abs(buf[i]);
@@ -63,7 +71,8 @@ int main(int argc, char** argv) {
   rms = __builtin_sqrt(rms / (frames * 2));
   printf("song %d: rms=%.1f peak=%d\n", song, rms, peak);
 
-  if (mkdir("/tmp/srdump", 0766) == -1 && errno != EEXIST) {
+  if (mkdir("/tmp/srdump", 0766) == -1 && errno != EEXIST)
+  {
     printf("Failed to create temp directory \"/tmp/srdump\"\n");
     return -1;
   }

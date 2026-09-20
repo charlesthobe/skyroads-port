@@ -8,7 +8,8 @@
 #include "render.h"
 #include "sr.h"
 
-typedef enum {
+typedef enum
+{
   SR_ST_INTRO,
   SR_ST_MAINMENU,
   SR_ST_GOMENU,
@@ -20,9 +21,15 @@ typedef enum {
   SR_ST_QUIT
 } sr_state;
 
-typedef enum { SR_FADE_NONE, SR_FADE_IN, SR_FADE_OUT } sr_fade;
+typedef enum
+{
+  SR_FADE_NONE,
+  SR_FADE_IN,
+  SR_FADE_OUT
+} sr_fade;
 
-struct sr_game {
+struct sr_game
+{
   sr_assets assets;
   sr_fb fb;
   sr_rgb6 cur_pal[256]; /* palette before fade scaling */
