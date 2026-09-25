@@ -2,19 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-static uint16_t checksum(const uint16_t* words) /* words[1..32] */
-{
-  uint16_t sum = 0;
-  for (int i = 1; i <= 32; i++)
-    sum = (uint16_t)(sum + (words[i] ^ i));
-  return sum;
-}
+/* The checksum function from the original EXE does a for loop to calculate the
+ * checksum like so:
+    uint16_t checksum = 0;
+    for (int i = 1; i < 33; i++)
+    {
+    x;
+    checksum += w[1] ^ i;
+    }
+ * which always results in 528 */
+static const uint16_t consistent_buggy_chksm_result = 528;
 
 void sr_cfg_load(sr_cfg* c, const sr_io* io)
 {
   memset(c, 0, sizeof *c);
   size_t size;
-  uint16_t* d = io->read_file("skyroads.cfg", &size);
+  uint16_t* d = io->read_file("SKYROADS.CFG", &size);
   if (!d)
     return;
   if (size >= 66)
@@ -22,7 +25,7 @@ void sr_cfg_load(sr_cfg* c, const sr_io* io)
     uint16_t w[33];
     for (int i = 0; i < 33; i++)
       w[i] = d[i];
-    if (checksum(w) == w[0])
+    if (w[0] == consistent_buggy_chksm_result)
     {
       c->control = w[1];
       c->sound_off = w[2];
@@ -42,12 +45,12 @@ void sr_cfg_save(const sr_cfg* c, const sr_io* io)
   w[2] = c->sound_off;
   for (int i = 0; i < 30; i++)
     w[3 + i] = c->completions[i];
-  w[0] = checksum(w);
+  w[0] = consistent_buggy_chksm_result;
   uint8_t d[66];
   for (int i = 0; i < 33; i++)
   {
     d[i * 2] = (uint8_t)(w[i] & 0xff);
     d[i * 2 + 1] = (uint8_t)(w[i] >> 8);
   }
-  io->write_file("skyroads.cfg", d, sizeof d);
+  io->write_file("SKYROADS.CFG", d, sizeof d);
 }
