@@ -256,8 +256,8 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x41);
   }
-  /* This line isn't in the decompiled code but it crashes without it, and
-     produces wrong graphics if the second parameter is any other value */
+  // This line isn't in the decompiled code but it crashes without it, and
+  // produces wrong graphics if the second parameter is any other value
   seek_kind(cc, 2);
   skip_record(&cc->f);
   if (shape(cc->inner) < 2) // adjacent class
@@ -266,6 +266,9 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
   }
   if (shape(cc->nearer) < 2)
   {
+    // This line isn't in the decompiled code as well but it's needed for
+    // tunnel openings that are far to the sides of the screen to be hollow.
+    seek_kind(cc, 3);
     skip_record(&cc->f);
     fill_record(&cc->f, cc->half, 0);
     fill_record(&cc->f, cc->half, 0);
