@@ -4,7 +4,7 @@
  * ticks from a rational accumulator. */
 #include "../../core/audio.h"
 #include "../../core/game.h"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,18 +36,18 @@ static void* read_at(const char* dir, const char* name, size_t* out_size)
       fname[i] = attempt ? (char)((c >= 'a' && c <= 'z') ? c - 32 : c) : c;
     }
     snprintf(path, sizeof path, "%s/%s", dir, fname);
-    SDL_RWops* rw = SDL_RWFromFile(path, "rb");
+    SDL_IOStream* rw = SDL_IOFromFile(path, "rb");
     if (!rw)
       continue;
-    Sint64 size = SDL_RWsize(rw);
+    Sint64 size = SDL_GetIOSize(rw);
     if (size <= 0)
     {
-      SDL_RWclose(rw);
+      SDL_CloseIO(rw);
       return NULL;
     }
     void* buf = malloc((size_t)size);
-    size_t got = SDL_RWread(rw, buf, 1, (size_t)size);
-    SDL_RWclose(rw);
+    size_t got = SDL_ReadIO(rw, buf, (size_t)size);
+    SDL_CloseIO(rw);
     if (got != (size_t)size)
     {
       free(buf);
@@ -81,11 +81,11 @@ static bool io_write_file(const char* name, const void* data, size_t size)
       continue;
     char path[1300];
     snprintf(path, sizeof path, "%s/%s", dirs[i], name);
-    SDL_RWops* rw = SDL_RWFromFile(path, "wb");
+    SDL_IOStream* rw = SDL_IOFromFile(path, "wb");
     if (!rw)
       continue;
-    size_t n = SDL_RWwrite(rw, data, 1, size);
-    SDL_RWclose(rw);
+    size_t n = SDL_WriteIO(rw, data, size);
+    SDL_CloseIO(rw);
     if (n == size)
       return true;
   }
@@ -211,20 +211,21 @@ static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
 static void touch_update_held(app_t* a)
 {
   memset(a->touch.held, 0, sizeof a->touch.held);
-  int ndev = SDL_GetNumTouchDevices();
+  int ndev;
+  SDL_TouchID* touch_devs = SDL_GetTouchDevices(&ndev);
   for (int d = 0; d < ndev; d++)
   {
-    SDL_TouchID tid = SDL_GetTouchDevice(d);
-    int nf = SDL_GetNumTouchFingers(tid);
+    int nf;
+    SDL_Finger** f = SDL_GetTouchFingers(touch_devs[d], &nf);
     for (int i = 0; i < nf; i++)
     {
-      SDL_Finger* f = SDL_GetTouchFinger(tid, i);
       if (f)
-        touch_classify(a, f->x, f->y, a->touch.held);
+        touch_classify(a, f[i]->x, f[i]->y, a->touch.held);
     }
   }
   if (a->mouse_down)
     touch_classify(a, a->mouse_x, a->mouse_y, a->touch.held);
+  free(touch_devs);
 }
 
 static void pump_events(app_t* a)
@@ -234,42 +235,42 @@ static void pump_events(app_t* a)
   {
     switch (e.type)
     {
-    case SDL_QUIT:
+    case SDL_EVENT_QUIT:
       a->quit = true;
       break;
-    case SDL_KEYDOWN:
-      if ((e.key.keysym.mod & KMOD_ALT) && e.key.keysym.sym == SDLK_RETURN)
+    case SDL_EVENT_KEY_DOWN:
+      if ((e.key.mod & SDL_KMOD_ALT) && e.key.key == SDLK_RETURN)
       {
-        if (SDL_GetWindowFlags(a->win) & SDL_WINDOW_FULLSCREEN_DESKTOP)
+        if (SDL_GetWindowFlags(a->win) & SDL_WINDOW_FULLSCREEN)
         {
-          SDL_SetWindowFullscreen(a->win, 0);
-          SDL_ShowCursor(SDL_ENABLE);
+          SDL_SetWindowFullscreen(a->win, false);
+          SDL_ShowCursor();
         }
         else
         {
-          SDL_SetWindowFullscreen(a->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
-          SDL_ShowCursor(SDL_DISABLE);
+          SDL_SetWindowFullscreen(a->win, true);
+          SDL_HideCursor();
         }
         break;
       }
       [[fallthrough]];
-    case SDL_KEYUP:
+    case SDL_EVENT_KEY_UP:
       if (e.key.repeat)
         break;
       for (size_t i = 0; i < sizeof keymap / sizeof *keymap; i++)
-        if (e.key.keysym.scancode == keymap[i].sc)
+        if (e.key.scancode == keymap[i].sc)
         {
           a->input.pressed[keymap[i].key] = a->input.held[keymap[i].key] =
-              (e.type == SDL_KEYDOWN);
+              (e.type == SDL_EVENT_KEY_DOWN);
         }
       break;
-    case SDL_FINGERDOWN:
+    case SDL_EVENT_FINGER_DOWN:
       /* edge-trigger: menu navigation, ESC/pause, demo-exit taps */
       touch_classify(a, e.tfinger.x, e.tfinger.y, a->touch.pressed);
       break;
     /* real mouse mirrors one finger for desktop testing (touch-derived
      * synthetic mouse events are disabled via SDL hint) */
-    case SDL_MOUSEBUTTONDOWN:
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
       if (e.button.which != SDL_TOUCH_MOUSEID)
       {
         int w, h;
@@ -280,7 +281,7 @@ static void pump_events(app_t* a)
         touch_classify(a, a->mouse_x, a->mouse_y, a->touch.pressed);
       }
       break;
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_MOTION:
       if (a->mouse_down && e.motion.which != SDL_TOUCH_MOUSEID)
       {
         int w, h;
@@ -289,7 +290,7 @@ static void pump_events(app_t* a)
         a->mouse_y = (float)e.motion.y / (h ? h : 1);
       }
       break;
-    case SDL_MOUSEBUTTONUP:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
       if (e.button.which != SDL_TOUCH_MOUSEID)
         a->mouse_down = false;
       break;
@@ -316,10 +317,9 @@ static void present(app_t* a)
       row[x] = pal[src[x]];
   }
   SDL_UnlockTexture(a->tex);
-  SDL_RenderSetLogicalSize(a->ren, SR_LOGW, SR_LOGH);
   SDL_SetRenderDrawColor(a->ren, 0, 0, 0, 255);
   SDL_RenderClear(a->ren);
-  SDL_RenderCopy(a->ren, a->tex, NULL, NULL);
+  SDL_RenderTexture(a->ren, a->tex, NULL, NULL);
   draw_touch_overlay(a); /* disables logical size internally */
   SDL_RenderPresent(a->ren);
 }
@@ -360,7 +360,8 @@ static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a)
   for (int i = 0; i < 3; i++)
   {
     v[i].position = p[i];
-    v[i].color = c;
+    //v[i].color = c;
+    memcpy(&v[i].color, &c, sizeof(SDL_Color));
     v[i].tex_coord = (SDL_FPoint){0, 0};
   }
   SDL_RenderGeometry(r, NULL, v, 3, NULL, 0);
@@ -375,7 +376,7 @@ static void fill_circle(SDL_Renderer* r, float cx, float cy, float rad,
   for (int dy = -irad; dy <= irad; dy++)
   {
     float half = SDL_sqrtf(rad * rad - (float)dy * dy);
-    SDL_RenderDrawLineF(r, cx - half, cy + dy, cx + half, cy + dy);
+    SDL_RenderLine(r, cx - half, cy + dy, cx + half, cy + dy);
   }
 }
 
@@ -385,12 +386,12 @@ static void draw_touch_overlay(app_t* a)
     return;
   /* the simulator/window may be scaled vs window coords; keep both in
    * window space */
-  SDL_RenderSetLogicalSize(a->ren, 0, 0);
+  SDL_SetRenderLogicalPresentation(a->ren, 0, 0, SDL_LOGICAL_PRESENTATION_STRETCH);
   int w, h, ow, oh;
   SDL_GetWindowSize(a->win, &w, &h);
-  SDL_GetRendererOutputSize(a->ren, &ow, &oh);
+  SDL_GetCurrentRenderOutputSize(a->ren, &ow, &oh);
   float sx = w ? (float)ow / w : 1, sy = h ? (float)oh / h : 1;
-  SDL_RenderSetScale(a->ren, sx, sy);
+  SDL_SetRenderScale(a->ren, sx, sy);
   SDL_SetRenderDrawBlendMode(a->ren, SDL_BLENDMODE_BLEND);
 
   touch_geom g = get_touch_geom(a);
@@ -401,8 +402,8 @@ static void draw_touch_overlay(app_t* a)
   SDL_FRect hbar = {g.dx - g.dr, g.dy - arm * 0.55f, g.dr * 2, arm * 1.1f};
   SDL_FRect vbar = {g.dx - arm * 0.55f, g.dy - g.dr, arm * 1.1f, g.dr * 2};
   SDL_SetRenderDrawColor(a->ren, 30, 30, 40, 90);
-  SDL_RenderFillRectF(a->ren, &hbar);
-  SDL_RenderFillRectF(a->ren, &vbar);
+  SDL_RenderFillRect(a->ren, &hbar);
+  SDL_RenderFillRect(a->ren, &vbar);
 
   /* arm chevrons, brighter while held */
   float tip = g.dr * 0.68f, cs = g.dr * 0.22f;
@@ -422,13 +423,23 @@ static void draw_touch_overlay(app_t* a)
   chevron(a->ren, (int)g.jx, (int)g.jy, (int)(g.jr * 0.45f), 0,
           jheld ? 255 : 180);
 
-  SDL_RenderSetScale(a->ren, 1.0f, 1.0f);
+  SDL_SetRenderScale(a->ren, 1.0f, 1.0f);
 }
 
-static void audio_cb(void* ud, Uint8* stream, int len)
+static void audio_cb(void* ud, SDL_AudioStream* stream, int additional_amount, int total_amount)
 {
   app_t* a = ud;
-  sr_audio_render(a->audio, (int16_t*)stream, len / 4);
+  if (additional_amount > 0) {
+    // 1. Allocate a temporary buffer or use a static one
+    int16_t *buf = SDL_malloc(additional_amount);
+
+    // 2. Mix / Generate your audio into 'buf' just like old times
+    sr_audio_render(a->audio, buf, additional_amount / 4);
+
+    // 3. Push the generated data into the stream
+    SDL_PutAudioStreamData(stream, buf, additional_amount);
+    SDL_free(buf);
+  }
 }
 
 static void apply_audio(app_t* a)
@@ -438,7 +449,6 @@ static void apply_audio(app_t* a)
   if (a->game.want_song != a->cur_song || a->game.sfx_request ||
       a->game.want_intro_snd)
   {
-    SDL_LockAudioDevice(a->adev);
     if (a->game.want_song != a->cur_song)
     {
       sr_audio_music(a->audio, &a->game.assets, a->game.want_song);
@@ -455,7 +465,6 @@ static void apply_audio(app_t* a)
                    a->game.assets.intro_snd_size, 0x5a);
       a->game.want_intro_snd = 0;
     }
-    SDL_UnlockAudioDevice(a->adev);
   }
 }
 
@@ -516,7 +525,7 @@ int main(int argc, char** argv)
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
   {
     fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
     return 1;
@@ -549,19 +558,19 @@ int main(int argc, char** argv)
   Uint32 win_flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALLOW_HIGHDPI;
   int win_w = SR_SCREEN_W * 3, win_h = SR_SCREEN_H * 3 * 6 / 5;
 #else
-  a->show_touch = SDL_GetHintBoolean("SR_TOUCH_UI", SDL_FALSE);
-  Uint32 win_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+  a->show_touch = SDL_GetHintBoolean("SR_TOUCH_UI", false);
+  Uint32 win_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
   int win_w = SR_SCREEN_W * 3, win_h = SR_SCREEN_H * 3 * 6 / 5;
 #endif
-  a->win = SDL_CreateWindow("SkyRoads", SDL_WINDOWPOS_CENTERED,
-                            SDL_WINDOWPOS_CENTERED, win_w, win_h, win_flags);
-  SDL_SetWindowFullscreen(a->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
-  SDL_ShowCursor(SDL_DISABLE);
-  a->ren = SDL_CreateRenderer(a->win, -1, SDL_RENDERER_PRESENTVSYNC);
-  SDL_RenderSetLogicalSize(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5);
+  SDL_CreateWindowAndRenderer("SkyRoads", win_w, win_h, win_flags, &a->win, &a->ren);
+  SDL_SetWindowFullscreen(a->win, true);
+  SDL_HideCursor();
+  SDL_SetRenderVSync(a->ren, -1);
+  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5, SDL_LOGICAL_PRESENTATION_LETTERBOX);
   a->tex =
-      SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_ARGB8888,
+      SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_XRGB8888,
                         SDL_TEXTUREACCESS_STREAMING, SR_SCREEN_W, SR_SCREEN_H);
+  SDL_SetTextureScaleMode(a->tex, SDL_SCALEMODE_NEAREST);
 
   char err[256] = "";
   if (!sr_game_init(&a->game, (sr_io){io_read_file, io_write_file}, err,
@@ -579,17 +588,25 @@ int main(int argc, char** argv)
   }
   a->audio = sr_audio_create();
   a->cur_song = -1;
-  SDL_AudioSpec want, have;
-  SDL_zero(want);
-  want.freq = SR_AUDIO_RATE;
-  want.format = AUDIO_S16SYS;
-  want.channels = 2;
-  want.samples = 1024;
-  want.callback = audio_cb;
-  want.userdata = a;
-  a->adev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+  SDL_AudioSpec audio_spec;
+  audio_spec.freq = SR_AUDIO_RATE;
+  audio_spec.channels = 2;
+  audio_spec.format = SDL_AUDIO_S16LE;
+  // Open default playback device
+  a->adev = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audio_spec);
   if (a->adev)
-    SDL_PauseAudioDevice(a->adev, 0);
+  {
+    // Create an audio stream matching your source and target formats
+    SDL_AudioStream *stream = SDL_CreateAudioStream(&audio_spec, &audio_spec);
+    if (stream) {
+      // Bind stream to the open audio device
+      SDL_BindAudioStream(a->adev, stream);
+      // Set the callback to feed data to the stream
+      SDL_SetAudioStreamGetCallback(stream, audio_cb, a);
+      // Starts as paused, has to be resumed
+      SDL_ResumeAudioDevice(a->adev);
+    }
+  }
   a->last_counter = SDL_GetPerformanceCounter();
 
 #ifdef __EMSCRIPTEN__

@@ -62,9 +62,9 @@ if(SR_IOS)
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -g")
   set(SDL_SHARED OFF CACHE BOOL "" FORCE)
   set(SDL_STATIC ON CACHE BOOL "" FORCE)
-  FetchContent_Declare(SDL2
-    URL https://github.com/libsdl-org/SDL/releases/download/release-2.30.9/SDL2-2.30.9.tar.gz)
-  FetchContent_MakeAvailable(SDL2)
+  FetchContent_Declare(SDL3
+    URL https://github.com/libsdl-org/SDL/releases/download/release-2.30.9/SDL3-2.30.9.tar.gz)
+  FetchContent_MakeAvailable(SDL3)
 
   set(BUNDLED_DATA "")
   foreach(f ${DATA_FILES})
@@ -77,8 +77,8 @@ if(SR_IOS)
   set_source_files_properties(${BUNDLED_DATA}
     ${CMAKE_SOURCE_DIR}/src/platform/ios/Assets.xcassets PROPERTIES
     MACOSX_PACKAGE_LOCATION Resources)
-  # SDL renames our main() to SDL_main(); SDL2main provides the real entry.
-  target_link_libraries(skyroads PRIVATE SDL2::SDL2main SDL2::SDL2-static)
+  # SDL renames our main() to SDL_main(); SDL3main provides the real entry.
+  target_link_libraries(skyroads PRIVATE SDL3::SDL3main SDL3::SDL3-static)
   set(SR_IOS_TEAM "" CACHE STRING
       "Apple Development Team ID; set for on-device builds, empty = simulator unsigned")
   set(SR_IOS_BUILD "2" CACHE STRING
@@ -129,23 +129,23 @@ if(EMSCRIPTEN)
   return()
 endif()
 
-# ------------------------------------------------------- desktop (SDL2) ----
-find_package(SDL2 REQUIRED)
-if(WIN32 AND TARGET SDL2::SDL2main)
-  # SDL renames main() to SDL_main(); SDL2main supplies WinMain.
-  target_link_libraries(skyroads PRIVATE SDL2::SDL2main)
+# ------------------------------------------------------- desktop (SDL3) ----
+find_package(SDL3 REQUIRED)
+if(WIN32 AND TARGET SDL3::SDL3main)
+  # SDL renames main() to SDL_main(); SDL3main supplies WinMain.
+  target_link_libraries(skyroads PRIVATE SDL3::SDL3main)
 endif()
-if(TARGET SDL2::SDL2)
-  target_link_libraries(skyroads PRIVATE SDL2::SDL2)
+if(TARGET SDL3::SDL3)
+  target_link_libraries(skyroads PRIVATE SDL3::SDL3)
 else()
-  target_include_directories(skyroads PRIVATE ${SDL2_INCLUDE_DIRS})
-  target_link_libraries(skyroads PRIVATE ${SDL2_LIBRARIES})
+  target_include_directories(skyroads PRIVATE ${SDL3_INCLUDE_DIRS})
+  target_link_libraries(skyroads PRIVATE ${SDL3_LIBRARIES})
 endif()
 if(WIN32)
-  # ship SDL2.dll beside the exe
+  # ship SDL3.dll beside the exe
   add_custom_command(TARGET skyroads POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:SDL2::SDL2> $<TARGET_FILE_DIR:skyroads>)
+    $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:skyroads>)
 endif()
 
 add_executable(sr_dump        ${CORE_SRC} src/tools/dump_frames.c)

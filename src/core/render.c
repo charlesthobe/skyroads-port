@@ -251,7 +251,7 @@ static void compose_tunnel(compctx* cc) /* 0x303d */
 static void compose_tun_high(compctx* cc) /* 0x2fb0 */
 {
   compose_floor(cc);
-  if (shape(cc->nearer) < 2)
+  if (shape(cc->nearer) < 2) // abover class
   {
     seek_kind(cc, 1);
     fill_record(&cc->f, cc->half, 0x41);
@@ -260,7 +260,7 @@ static void compose_tun_high(compctx* cc) /* 0x2fb0 */
      produces wrong graphics if the second parameter is any other value */
   seek_kind(cc, 2);
   skip_record(&cc->f);
-  if (shape(cc->inner) < 2)
+  if (shape(cc->inner) < 2) // adjacent class
   {
     fill_record(&cc->f, cc->half, 0);
   }

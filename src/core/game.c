@@ -267,10 +267,6 @@ static void handle_held_keys(int* hold_counter, sr_input* in)
       }
     }
   }
-  else
-  {
-    *hold_counter = 0;
-  }
 }
 
 static void tick_gomenu(sr_game* g, const sr_input* in)
