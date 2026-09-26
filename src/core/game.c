@@ -8,6 +8,23 @@
 
 /* ------------------------------------------------------------------ init */
 
+static void start_intro(sr_game* g);
+
+bool sr_game_init(sr_game* g, sr_io io, char* err, size_t errlen)
+{
+  memset(g, 0, sizeof *g);
+  if (!sr_assets_load(&g->assets, io, err, errlen))
+    return false;
+  if (!sr_render_init(&g->render, &g->assets))
+    return false;
+  sr_cfg_load(&g->cfg, &g->assets.io);
+  /* boot into the intro (fn_4575): black -> ANIM palette + title pict,
+   * fade in, sound, animation */
+  g->state = SR_ST_INTRO;
+  start_intro(g);
+  return true;
+}
+
 static void start_intro(sr_game* g)
 {
   g->want_song = 0;
@@ -23,21 +40,6 @@ static void start_intro(sr_game* g)
   // Reset intro
   g->intro_t = 0;
   g->intro_rec = 0;
-}
-
-bool sr_game_init(sr_game* g, sr_io io, char* err, size_t errlen)
-{
-  memset(g, 0, sizeof *g);
-  if (!sr_assets_load(&g->assets, io, err, errlen))
-    return false;
-  if (!sr_render_init(&g->render, &g->assets))
-    return false;
-  sr_cfg_load(&g->cfg, &g->assets.io);
-  /* boot into the intro (fn_4575): black -> ANIM palette + title pict,
-   * fade in, sound, animation */
-  g->state = SR_ST_INTRO;
-  start_intro(g);
-  return true;
 }
 
 bool sr_game_running(const sr_game* g) { return g->state != SR_ST_QUIT; }
