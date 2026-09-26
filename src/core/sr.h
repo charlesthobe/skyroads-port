@@ -42,9 +42,9 @@ enum
 
 typedef struct
 {
-  uint8_t held[SR_KEY_COUNT]; /* bit0: currently held */
+  bool held[SR_KEY_COUNT]; /* bit0: currently held */
   /* edge-triggered presses appended by platform between ticks */
-  uint8_t pressed[SR_KEY_COUNT];
+  bool pressed[SR_KEY_COUNT];
 } sr_input;
 
 typedef struct
