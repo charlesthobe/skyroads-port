@@ -160,7 +160,7 @@ static touch_geom get_touch_geom(app_t* a)
 }
 
 /* Classify a finger position into key flags (writes into out[]). */
-static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
+static void touch_classify(app_t* a, float nx, float ny, bool* out)
 {
   int w, h;
   SDL_GetWindowSize(a->win, &w, &h);
@@ -172,12 +172,12 @@ static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
   {
     if (px < 0.12f * (float)w)
     {
-      out[SR_KEY_ESC] = 1;
+      out[SR_KEY_ESC] = true;
       return;
     }
     if (px > 0.88f * (float)w)
     {
-      out[SR_KEY_PAUSE] = 1;
+      out[SR_KEY_PAUSE] = true;
       return;
     }
   }
@@ -185,8 +185,8 @@ static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
   float jdx = px - g.jx, jdy = py - g.jy;
   if (jdx * jdx + jdy * jdy <= (g.jr * 1.6f) * (g.jr * 1.6f))
   {
-    out[SR_KEY_JUMP] = 1;
-    out[SR_KEY_ENTER] = 1; /* doubles as select in menus */
+    out[SR_KEY_JUMP] = true;
+    out[SR_KEY_ENTER] = true; /* doubles as select in menus */
     return;
   }
   /* d-pad: independent axes -> 8-way with diagonals */
@@ -195,13 +195,13 @@ static void touch_classify(app_t* a, float nx, float ny, uint8_t* out)
   {
     float dead = g.dr * 0.28f;
     if (ddx < -dead)
-      out[SR_KEY_LEFT] = 1;
+      out[SR_KEY_LEFT] = true;
     if (ddx > dead)
-      out[SR_KEY_RIGHT] = 1;
+      out[SR_KEY_RIGHT] = true;
     if (ddy < -dead)
-      out[SR_KEY_UP] = 1;
+      out[SR_KEY_UP] = true;
     if (ddy > dead)
-      out[SR_KEY_DOWN] = 1;
+      out[SR_KEY_DOWN] = true;
   }
 }
 
@@ -332,7 +332,7 @@ static void present(app_t* a)
 static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a)
 {
   SDL_Vertex v[3];
-  SDL_Color c = {255, 255, 255, a};
+  SDL_FColor c = {255, 255, 255, a};
   SDL_FPoint p[3];
   switch (dir)
   {
@@ -360,8 +360,7 @@ static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a)
   for (int i = 0; i < 3; i++)
   {
     v[i].position = p[i];
-    //v[i].color = c;
-    memcpy(&v[i].color, &c, sizeof(SDL_Color));
+    v[i].color = c;
     v[i].tex_coord = (SDL_FPoint){0, 0};
   }
   SDL_RenderGeometry(r, NULL, v, 3, NULL, 0);
@@ -386,16 +385,17 @@ static void draw_touch_overlay(app_t* a)
     return;
   /* the simulator/window may be scaled vs window coords; keep both in
    * window space */
-  SDL_SetRenderLogicalPresentation(a->ren, 0, 0, SDL_LOGICAL_PRESENTATION_STRETCH);
   int w, h, ow, oh;
   SDL_GetWindowSize(a->win, &w, &h);
+  SDL_SetRenderLogicalPresentation(a->ren, w, h,
+                                 SDL_LOGICAL_PRESENTATION_STRETCH);
   SDL_GetCurrentRenderOutputSize(a->ren, &ow, &oh);
   float sx = w ? (float)ow / w : 1, sy = h ? (float)oh / h : 1;
   SDL_SetRenderScale(a->ren, sx, sy);
   SDL_SetRenderDrawBlendMode(a->ren, SDL_BLENDMODE_BLEND);
 
   touch_geom g = get_touch_geom(a);
-  const uint8_t* held = a->touch.held;
+  const bool* held = a->touch.held;
   float arm = g.dr * 0.62f; /* half-width of the d-pad cross */
 
   /* d-pad cross: two rounded bars */
@@ -423,15 +423,20 @@ static void draw_touch_overlay(app_t* a)
   chevron(a->ren, (int)g.jx, (int)g.jy, (int)(g.jr * 0.45f), 0,
           jheld ? 255 : 180);
 
+  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6,
+                                 SR_SCREEN_H * 6 * 6 / 5,
+                                 SDL_LOGICAL_PRESENTATION_LETTERBOX);
   SDL_SetRenderScale(a->ren, 1.0f, 1.0f);
 }
 
-static void audio_cb(void* ud, SDL_AudioStream* stream, int additional_amount, int total_amount)
+static void audio_cb(void* ud, SDL_AudioStream* stream, int additional_amount,
+                     [[maybe_unused]] int total_amount)
 {
   app_t* a = ud;
-  if (additional_amount > 0) {
+  if (additional_amount > 0)
+  {
     // 1. Allocate a temporary buffer or use a static one
-    int16_t *buf = SDL_malloc(additional_amount);
+    int16_t* buf = SDL_malloc(additional_amount);
 
     // 2. Mix / Generate your audio into 'buf' just like old times
     sr_audio_render(a->audio, buf, additional_amount / 4);
@@ -486,21 +491,17 @@ static void main_loop(void* ud)
   while (a->acc_num >= per_tick && guard++ < 8)
   {
     a->acc_num -= per_tick;
-    /* compose keyboard + touch into one */
-    for (int k = 0; k < SR_KEY_COUNT; k++)
-    {
-      a->input.held[k] |= a->touch.held[k];
-      a->input.pressed[k] |= a->touch.pressed[k];
+    /* compose keyboard + touch into a transient input; never write
+     * the OR back into the persistent keyboard state (that latches) */
+    sr_input eff;
+    for (int k = 0; k < SR_KEY_COUNT; k++) {
+      eff.held[k] = a->input.held[k] || a->touch.held[k];
+      eff.pressed[k] = a->input.pressed[k] ||
+                                 a->touch.pressed[k];
     }
-    sr_game_tick(&a->game, &a->input);
+    sr_game_tick(&a->game, &eff);
     memset(a->input.pressed, 0, sizeof a->input.pressed);
     memset(a->touch.pressed, 0, sizeof a->touch.pressed);
-    // Make touch input inherit common input state
-    for (int k = 0; k < SR_KEY_COUNT; k++)
-    {
-      a->touch.held[k] = a->input.held[k];
-      a->touch.pressed[k] = a->input.pressed[k];
-    }
     apply_audio(a);
   }
   present(a);
@@ -562,11 +563,14 @@ int main(int argc, char** argv)
   Uint32 win_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
   int win_w = SR_SCREEN_W * 3, win_h = SR_SCREEN_H * 3 * 6 / 5;
 #endif
-  SDL_CreateWindowAndRenderer("SkyRoads", win_w, win_h, win_flags, &a->win, &a->ren);
+  SDL_CreateWindowAndRenderer("SkyRoads", win_w, win_h, win_flags, &a->win,
+                              &a->ren);
   SDL_SetWindowFullscreen(a->win, true);
   SDL_HideCursor();
   SDL_SetRenderVSync(a->ren, -1);
-  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6,
+                                   SR_SCREEN_H * 6 * 6 / 5,
+                                   SDL_LOGICAL_PRESENTATION_LETTERBOX);
   a->tex =
       SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_XRGB8888,
                         SDL_TEXTUREACCESS_STREAMING, SR_SCREEN_W, SR_SCREEN_H);
@@ -597,8 +601,9 @@ int main(int argc, char** argv)
   if (a->adev)
   {
     // Create an audio stream matching your source and target formats
-    SDL_AudioStream *stream = SDL_CreateAudioStream(&audio_spec, &audio_spec);
-    if (stream) {
+    SDL_AudioStream* stream = SDL_CreateAudioStream(&audio_spec, &audio_spec);
+    if (stream)
+    {
       // Bind stream to the open audio device
       SDL_BindAudioStream(a->adev, stream);
       // Set the callback to feed data to the stream
