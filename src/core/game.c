@@ -409,14 +409,27 @@ static void tick_game(sr_game* g, const sr_input* in)
   /* pause (P): freeze; ESC quits to menu, other key resumes (fn_1f2c) */
   if (g->paused)
   {
+    static int pressed_key = 0xffff;
     if (in->pressed[SR_KEY_ESC])
     {
       g->paused = 0;
       fade_to(g, SR_ST_GOMENU);
     }
-    else if (any_pressed(in))
+    else if (pressed_key == 0xffff && any_pressed(in))
     {
-      g->paused = 0;
+      for (int i = 0; i < SR_KEY_COUNT; i++)
+      {
+        if (in->pressed[i])
+        {
+          pressed_key = i;
+          break;
+        }
+      }
+    }
+    else if (pressed_key != 0xffff && !in->held[pressed_key])
+    {
+        pressed_key = 0xffff;
+        g->paused = 0;
     }
     return;
   }
