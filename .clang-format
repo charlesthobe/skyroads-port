@@ -1,3 +1,4 @@
 PointerAlignment: Left
 ReferenceAlignment: Left
 BreakBeforeBraces: Allman
+ColumnLimit: 100

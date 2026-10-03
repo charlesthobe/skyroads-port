@@ -108,14 +108,12 @@ int main(int argc, char** argv)
     }
     if (g->state != SR_ST_GAME)
     {
-      printf("left game state at t=%d (row %u)\n", t,
-             (unsigned)(g->play.z >> 16));
+      printf("left game state at t=%d (row %u)\n", t, (unsigned)(g->play.z >> 16));
       break;
     }
   }
   snprintf(path, sizeof path, "%s/rt_final.ppm", out);
   write_ppm(g, path);
-  printf("done row=%u speed=%x\n", (unsigned)(g->play.z >> 16),
-         (unsigned)g->play.speed);
+  printf("done row=%u speed=%x\n", (unsigned)(g->play.z >> 16), (unsigned)g->play.speed);
   return 0;
 }

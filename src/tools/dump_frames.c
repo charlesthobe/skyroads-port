@@ -89,7 +89,7 @@ int main(int argc, char** argv)
   snprintf(path, sizeof path, "%s/frame_game.ppm", out);
   write_ppm(g, path);
 
-  printf("ok: road rows=%d gravity=%d w2=%d w3=%d trek_objs=%d\n", g->road.rows,
-         g->road.gravity, g->road.word2, g->road.word3, g->assets.n_trek);
+  printf("ok: road rows=%d gravity=%d w2=%d w3=%d trek_objs=%d\n", g->road.rows, g->road.gravity,
+         g->road.word2, g->road.word3, g->assets.n_trek);
   return 0;
 }

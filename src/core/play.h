@@ -65,19 +65,16 @@ typedef struct
   uint32_t sfx_tick;     /* [0xaf48] */
 } sr_play;
 
-void sr_play_init(sr_play* p, const sr_road* road, const uint8_t* demo,
-                  size_t demo_size);
+void sr_play_init(sr_play* p, const sr_road* road, const uint8_t* demo, size_t demo_size);
 /* One 36Hz physics tick (§5). Returns SR_RES_*. */
 int sr_play_tick(sr_play* p);
 /* Input mapping per fn_074c keyboard path; demo mode reads DEMO.REC. */
 void sr_play_input(sr_play* p, const sr_input* in);
 
 /* Collision queries (also used by the renderer for shadows). */
-uint16_t sr_tile_at(const sr_play* p, uint32_t z, uint16_t x); /* fn_04c0 */
-int sr_solid(const sr_play* p, uint32_t z, uint16_t x,
-             uint16_t y); /* fn_1685 */
-int sr_in_tunnel(const sr_play* p, uint32_t z, uint16_t x,
-                 uint16_t y); /* fn_0533 */
+uint16_t sr_tile_at(const sr_play* p, uint32_t z, uint16_t x);          /* fn_04c0 */
+int sr_solid(const sr_play* p, uint32_t z, uint16_t x, uint16_t y);     /* fn_1685 */
+int sr_in_tunnel(const sr_play* p, uint32_t z, uint16_t x, uint16_t y); /* fn_0533 */
 
 #define BEEP_INTERVAL 9
 

@@ -12,7 +12,7 @@
 
 typedef struct
 {
-  uint8_t* exp[8]; /* expanded phase objects (fn_3a7a) */
+  uint8_t* exp[8];                             /* expanded phase objects (fn_3a7a) */
   uint8_t pristine[SR_SCREEN_W * SR_SCREEN_H]; /* backdrop + dashboard */
 } sr_render;
 
@@ -22,8 +22,8 @@ void sr_render_set_world(sr_render* r, const sr_assets* a);
 
 /* Draw one gameplay frame into fb (viewport + ship + shadow).
  * Mirrors fn_0be3's computations from play state. */
-void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
-                     const sr_play* p, uint32_t tick, int on_sticky);
+void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a, const sr_play* p, uint32_t tick,
+                     int on_sticky);
 
 void sr_render_free(sr_render* r);
 

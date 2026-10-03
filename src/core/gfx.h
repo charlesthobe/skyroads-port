@@ -17,8 +17,8 @@ void sr_blit_pict(sr_fb* fb, const sr_pict* p, bool opaque);
 /* Blit at an explicit position (sprites). */
 void sr_blit_at(sr_fb* fb, const uint8_t* pixels, int w, int h, int x, int y);
 /* Sub-rectangle of a strip (cars sheet) at position, transparent-0. */
-void sr_blit_strip(sr_fb* fb, const uint8_t* strip, int strip_w, int src_y,
-                   int w, int h, int x, int y);
+void sr_blit_strip(sr_fb* fb, const uint8_t* strip, int strip_w, int src_y, int w, int h, int x,
+                   int y);
 
 /* Expand 6-bit palette to 8-bit RGBA (platform present). */
 void sr_palette_rgba(const sr_rgb6* pal, uint32_t* out256);

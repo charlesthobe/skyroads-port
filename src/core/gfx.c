@@ -1,10 +1,7 @@
 #include "gfx.h"
 #include <string.h>
 
-void sr_fb_clear(sr_fb* fb, uint8_t color)
-{
-  memset(fb->px, color, sizeof fb->px);
-}
+void sr_fb_clear(sr_fb* fb, uint8_t color) { memset(fb->px, color, sizeof fb->px); }
 
 void sr_blit_pict(sr_fb* fb, const sr_pict* p, bool opaque)
 {
@@ -52,8 +49,8 @@ void sr_blit_at(sr_fb* fb, const uint8_t* pixels, int w, int h, int x, int y)
   }
 }
 
-void sr_blit_strip(sr_fb* fb, const uint8_t* strip, int strip_w, int src_y,
-                   int w, int h, int x, int y)
+void sr_blit_strip(sr_fb* fb, const uint8_t* strip, int strip_w, int src_y, int w, int h, int x,
+                   int y)
 {
   sr_blit_at(fb, strip + (size_t)src_y * strip_w, w, h, x, y);
 }

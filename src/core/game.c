@@ -53,8 +53,7 @@ static void start_road(sr_game* g, int entry, int demo)
     return;
   sr_assets_load_world(&g->assets, demo ? 0 : (entry - 1) / 3);
   sr_render_set_world(&g->render, &g->assets);
-  sr_play_init(&g->play, &g->road, demo ? g->assets.demo : NULL,
-               demo ? g->assets.demo_size : 0);
+  sr_play_init(&g->play, &g->road, demo ? g->assets.demo : NULL, demo ? g->assets.demo_size : 0);
   g->demo_mode = demo ? 1 : 0;
   g->paused = 0;
   g->tick = 0;
@@ -152,8 +151,8 @@ static void draw_gomenu(sr_game* g)
       int n = g->cfg.completions[rd];
       if (n > 7)
         n = 7;
-      int ofs = 0x11F0 + ((rd % 15) % 3) * 9 * 320 +
-                ((rd % 15) / 3) * 39 * 320 + (rd >= 15 ? 0xA0 : 0);
+      int ofs =
+          0x11F0 + ((rd % 15) % 3) * 9 * 320 + ((rd % 15) / 3) * 39 * 320 + (rd >= 15 ? 0xA0 : 0);
       for (int t = 0; t < n; t++)
       {
         sr_pict cur = g->assets.gomenu.picts[1];
@@ -205,8 +204,7 @@ static void tick_intro(sr_game* g, const sr_input* in)
   /* anim playback */
   uint32_t at = g->intro_t - (24 + 37);
   int frame = (int)(at / 2);
-  while (g->intro_rec < g->assets.n_anim &&
-         g->assets.anim[g->intro_rec].frame <= (uint16_t)frame)
+  while (g->intro_rec < g->assets.n_anim && g->assets.anim[g->intro_rec].frame <= (uint16_t)frame)
   {
     sr_blit_pict(&g->fb, &g->assets.anim[g->intro_rec].pict, false);
     g->intro_rec++;
@@ -428,8 +426,8 @@ static void tick_game(sr_game* g, const sr_input* in)
     }
     else if (pressed_key != 0xffff && !in->held[pressed_key])
     {
-        pressed_key = 0xffff;
-        g->paused = 0;
+      pressed_key = 0xffff;
+      g->paused = 0;
     }
     return;
   }
@@ -453,8 +451,7 @@ static void tick_game(sr_game* g, const sr_input* in)
     g->play.pending_sfx = 0;
   }
 
-  sr_render_frame(&g->render, &g->fb, &g->assets, &g->play, g->tick,
-                  g->play.on_sticky);
+  sr_render_frame(&g->render, &g->fb, &g->assets, &g->play, g->tick, g->play.on_sticky);
   sr_hud_draw(&g->fb, &g->assets, g->render.pristine, &g->play, g->tick);
   memcpy(g->cur_pal, g->assets.game_pal, sizeof g->cur_pal);
 

@@ -28,9 +28,8 @@ static int speed_rec(const sr_assets* a, int i, seg_rec* r)
   return 1;
 }
 
-static void draw_cells(sr_fb* fb, const uint8_t* pristine, uint16_t ofs, int w,
-                       int h, const uint8_t* cells, uint8_t c1, uint8_t c2,
-                       int lit)
+static void draw_cells(sr_fb* fb, const uint8_t* pristine, uint16_t ofs, int w, int h,
+                       const uint8_t* cells, uint8_t c1, uint8_t c2, int lit)
 {
   int x0 = ofs % 320, y0 = ofs / 320;
   for (int y = 0; y < h; y++)
@@ -71,9 +70,8 @@ static void draw_digit(sr_fb* fb, int x, int y, int digit)
   }
 }
 
-void swap_color_within_rect(sr_fb* fb, const uint8_t* pristine, int x, int y,
-                            int width, int height, int match_color,
-                            int new_color)
+void swap_color_within_rect(sr_fb* fb, const uint8_t* pristine, int x, int y, int width, int height,
+                            int match_color, int new_color)
 {
   for (int i = 0; i < width; i++)
   {
@@ -90,8 +88,8 @@ void swap_color_within_rect(sr_fb* fb, const uint8_t* pristine, int x, int y,
   }
 }
 
-void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
-                 sr_play* p, const uint32_t tick)
+void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine, sr_play* p,
+                 const uint32_t tick)
 {
   /* speedometer: 34 segments, displayed speed excludes autopilot delta */
   int32_t disp = p->speed - p->ap_delta;
@@ -117,11 +115,9 @@ void sr_hud_draw(sr_fb* fb, const sr_assets* a, const uint8_t* pristine,
   for (int i = 0; i < 10; i++)
   {
     const sr_gauge_seg* s = &a->oxy[i];
-    draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells, 0x5e, 0x5f,
-               i < oxy_segs);
+    draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells, 0x5e, 0x5f, i < oxy_segs);
     s = &a->ful[i];
-    draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells, 0x5e, 0x5f,
-               i < ful_segs);
+    draw_cells(fb, pristine, s->screen_ofs, s->w, s->h, s->cells, 0x5e, 0x5f, i < ful_segs);
   }
   /* out of oxygen */
   if (p->end_state == 5)

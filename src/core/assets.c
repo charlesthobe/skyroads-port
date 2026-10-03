@@ -12,8 +12,7 @@ static void* xmalloc(size_t n)
   return p;
 }
 
-static bool read_whole(sr_assets* a, const char* name, uint8_t** buf,
-                       size_t* size)
+static bool read_whole(sr_assets* a, const char* name, uint8_t** buf, size_t* size)
 {
   *buf = a->io.read_file(name, size);
   return *buf != NULL;
@@ -25,8 +24,8 @@ static bool read_whole(sr_assets* a, const char* name, uint8_t** buf,
  * consecutive CMAP section (last entry repeats); CMAP colors are written
  * into pal[base..], pict pixels are rebased by +base (0 stays 0) — exactly
  * what the original does at load time (EXE 0x3f75 / 0x4036). */
-static bool load_gfx(sr_assets* a, const char* name, sr_rgb6* pal,
-                     const int* bases, int n_bases, sr_gfxfile* out)
+static bool load_gfx(sr_assets* a, const char* name, sr_rgb6* pal, const int* bases, int n_bases,
+                     sr_gfxfile* out)
 {
   uint8_t* data;
   size_t size;
@@ -305,14 +304,14 @@ bool sr_assets_load(sr_assets* a, sr_io io, char* err, size_t errlen)
   memset(a, 0, sizeof *a);
   a->io = io;
 
-#define TRY(x, what)                                                           \
-  do                                                                           \
-  {                                                                            \
-    if (!(x))                                                                  \
-    {                                                                          \
-      snprintf(err, errlen, "%s", what);                                       \
-      return false;                                                            \
-    }                                                                          \
+#define TRY(x, what)                                                                               \
+  do                                                                                               \
+  {                                                                                                \
+    if (!(x))                                                                                      \
+    {                                                                                              \
+      snprintf(err, errlen, "%s", what);                                                           \
+      return false;                                                                                \
+    }                                                                                              \
   } while (0)
 
   static const int b_main[] = {190};
@@ -323,27 +322,20 @@ bool sr_assets_load(sr_assets* a, sr_io io, char* err, size_t errlen)
   static const int b_cars[] = {72};
   static const int b_dash[] = {92};
 
-  TRY(load_gfx(a, "mainmenu.lzs", a->menu_pal, b_main, 1, &a->mainmenu),
-      "mainmenu.lzs");
-  TRY(load_gfx(a, "setmenu.lzs", a->menu_pal, b_set, 2, &a->setmenu),
-      "setmenu.lzs");
-  TRY(load_gfx(a, "helpmenu.lzs", a->menu_pal, b_help, 1, &a->helpmenu),
-      "helpmenu.lzs");
-  TRY(load_gfx(a, "gomenu.lzs", a->menu_pal, b_go, 2, &a->gomenu),
-      "gomenu.lzs");
-  TRY(load_gfx(a, "intro.lzs", a->menu_pal, b_intro, 1, &a->intro),
-      "intro.lzs");
+  TRY(load_gfx(a, "mainmenu.lzs", a->menu_pal, b_main, 1, &a->mainmenu), "mainmenu.lzs");
+  TRY(load_gfx(a, "setmenu.lzs", a->menu_pal, b_set, 2, &a->setmenu), "setmenu.lzs");
+  TRY(load_gfx(a, "helpmenu.lzs", a->menu_pal, b_help, 1, &a->helpmenu), "helpmenu.lzs");
+  TRY(load_gfx(a, "gomenu.lzs", a->menu_pal, b_go, 2, &a->gomenu), "gomenu.lzs");
+  TRY(load_gfx(a, "intro.lzs", a->menu_pal, b_intro, 1, &a->intro), "intro.lzs");
   TRY(load_gfx(a, "cars.lzs", a->game_pal, b_cars, 1, &a->cars), "cars.lzs");
-  TRY(load_gfx(a, "dashbrd.lzs", a->game_pal, b_dash, 1, &a->dashbrd),
-      "dashbrd.lzs");
+  TRY(load_gfx(a, "dashbrd.lzs", a->game_pal, b_dash, 1, &a->dashbrd), "dashbrd.lzs");
   TRY(load_trekdat(a), "trekdat.lzs");
   TRY(load_gauge(a, "oxy_disp.dat", a->oxy), "oxy_disp.dat");
   TRY(load_gauge(a, "ful_disp.dat", a->ful), "ful_disp.dat");
   TRY(read_whole(a, "speed.dat", &a->speed_dat, &a->speed_size), "speed.dat");
   TRY(read_whole(a, "demo.rec", &a->demo, &a->demo_size), "demo.rec");
   TRY(load_anim(a), "anim.lzs");
-  TRY(read_whole(a, "intro.snd", &a->intro_snd, &a->intro_snd_size),
-      "intro.snd");
+  TRY(read_whole(a, "intro.snd", &a->intro_snd, &a->intro_snd_size), "intro.snd");
 #undef TRY
   return true;
 }

@@ -367,8 +367,8 @@ static void chevron(SDL_Renderer* r, int cx, int cy, int s, int dir, Uint8 a)
 }
 
 /* Filled circle via horizontal spans. */
-static void fill_circle(SDL_Renderer* r, float cx, float cy, float rad,
-                        Uint8 rr, Uint8 gg, Uint8 bb, Uint8 aa)
+static void fill_circle(SDL_Renderer* r, float cx, float cy, float rad, Uint8 rr, Uint8 gg,
+                        Uint8 bb, Uint8 aa)
 {
   SDL_SetRenderDrawColor(r, rr, gg, bb, aa);
   int irad = (int)rad;
@@ -387,8 +387,7 @@ static void draw_touch_overlay(app_t* a)
    * window space */
   int w, h, ow, oh;
   SDL_GetWindowSize(a->win, &w, &h);
-  SDL_SetRenderLogicalPresentation(a->ren, w, h,
-                                 SDL_LOGICAL_PRESENTATION_STRETCH);
+  SDL_SetRenderLogicalPresentation(a->ren, w, h, SDL_LOGICAL_PRESENTATION_STRETCH);
   SDL_GetCurrentRenderOutputSize(a->ren, &ow, &oh);
   float sx = w ? (float)ow / w : 1, sy = h ? (float)oh / h : 1;
   SDL_SetRenderScale(a->ren, sx, sy);
@@ -407,25 +406,19 @@ static void draw_touch_overlay(app_t* a)
 
   /* arm chevrons, brighter while held */
   float tip = g.dr * 0.68f, cs = g.dr * 0.22f;
-  chevron(a->ren, (int)(g.dx - tip), (int)g.dy, (int)cs, 2,
-          held[SR_KEY_LEFT] ? 255 : 140);
-  chevron(a->ren, (int)(g.dx + tip), (int)g.dy, (int)cs, 3,
-          held[SR_KEY_RIGHT] ? 255 : 140);
-  chevron(a->ren, (int)g.dx, (int)(g.dy - tip), (int)cs, 0,
-          held[SR_KEY_UP] ? 255 : 140);
-  chevron(a->ren, (int)g.dx, (int)(g.dy + tip), (int)cs, 1,
-          held[SR_KEY_DOWN] ? 255 : 140);
+  chevron(a->ren, (int)(g.dx - tip), (int)g.dy, (int)cs, 2, held[SR_KEY_LEFT] ? 255 : 140);
+  chevron(a->ren, (int)(g.dx + tip), (int)g.dy, (int)cs, 3, held[SR_KEY_RIGHT] ? 255 : 140);
+  chevron(a->ren, (int)g.dx, (int)(g.dy - tip), (int)cs, 0, held[SR_KEY_UP] ? 255 : 140);
+  chevron(a->ren, (int)g.dx, (int)(g.dy + tip), (int)cs, 1, held[SR_KEY_DOWN] ? 255 : 140);
 
   /* jump button */
   int jheld = held[SR_KEY_JUMP];
   fill_circle(a->ren, g.jx, g.jy, g.jr, 255, 200, 50, jheld ? 150 : 70);
   fill_circle(a->ren, g.jx, g.jy, g.jr * 0.86f, 255, 220, 90, jheld ? 120 : 50);
-  chevron(a->ren, (int)g.jx, (int)g.jy, (int)(g.jr * 0.45f), 0,
-          jheld ? 255 : 180);
+  chevron(a->ren, (int)g.jx, (int)g.jy, (int)(g.jr * 0.45f), 0, jheld ? 255 : 180);
 
-  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6,
-                                 SR_SCREEN_H * 6 * 6 / 5,
-                                 SDL_LOGICAL_PRESENTATION_LETTERBOX);
+  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5,
+                                   SDL_LOGICAL_PRESENTATION_LETTERBOX);
   SDL_SetRenderScale(a->ren, 1.0f, 1.0f);
 }
 
@@ -451,8 +444,7 @@ static void apply_audio(app_t* a)
 {
   if (!a->adev)
     return;
-  if (a->game.want_song != a->cur_song || a->game.sfx_request ||
-      a->game.want_intro_snd)
+  if (a->game.want_song != a->cur_song || a->game.sfx_request || a->game.want_intro_snd)
   {
     if (a->game.want_song != a->cur_song)
     {
@@ -466,8 +458,7 @@ static void apply_audio(app_t* a)
     }
     if (a->game.want_intro_snd)
     {
-      sr_audio_pcm(a->audio, a->game.assets.intro_snd,
-                   a->game.assets.intro_snd_size, 0x5a);
+      sr_audio_pcm(a->audio, a->game.assets.intro_snd, a->game.assets.intro_snd_size, 0x5a);
       a->game.want_intro_snd = 0;
     }
   }
@@ -494,10 +485,10 @@ static void main_loop(void* ud)
     /* compose keyboard + touch into a transient input; never write
      * the OR back into the persistent keyboard state (that latches) */
     sr_input eff;
-    for (int k = 0; k < SR_KEY_COUNT; k++) {
+    for (int k = 0; k < SR_KEY_COUNT; k++)
+    {
       eff.held[k] = a->input.held[k] || a->touch.held[k];
-      eff.pressed[k] = a->input.pressed[k] ||
-                                 a->touch.pressed[k];
+      eff.pressed[k] = a->input.pressed[k] || a->touch.pressed[k];
     }
     sr_game_tick(&a->game, &eff);
     memset(a->input.pressed, 0, sizeof a->input.pressed);
@@ -563,22 +554,18 @@ int main(int argc, char** argv)
   Uint32 win_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
   int win_w = SR_SCREEN_W * 3, win_h = SR_SCREEN_H * 3 * 6 / 5;
 #endif
-  SDL_CreateWindowAndRenderer("SkyRoads", win_w, win_h, win_flags, &a->win,
-                              &a->ren);
+  SDL_CreateWindowAndRenderer("SkyRoads", win_w, win_h, win_flags, &a->win, &a->ren);
   SDL_SetWindowFullscreen(a->win, true);
   SDL_HideCursor();
   SDL_SetRenderVSync(a->ren, -1);
-  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6,
-                                   SR_SCREEN_H * 6 * 6 / 5,
+  SDL_SetRenderLogicalPresentation(a->ren, SR_SCREEN_W * 6, SR_SCREEN_H * 6 * 6 / 5,
                                    SDL_LOGICAL_PRESENTATION_LETTERBOX);
-  a->tex =
-      SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_XRGB8888,
-                        SDL_TEXTUREACCESS_STREAMING, SR_SCREEN_W, SR_SCREEN_H);
+  a->tex = SDL_CreateTexture(a->ren, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_STREAMING,
+                             SR_SCREEN_W, SR_SCREEN_H);
   SDL_SetTextureScaleMode(a->tex, SDL_SCALEMODE_NEAREST);
 
   char err[256] = "";
-  if (!sr_game_init(&a->game, (sr_io){io_read_file, io_write_file}, err,
-                    sizeof err))
+  if (!sr_game_init(&a->game, (sr_io){io_read_file, io_write_file}, err, sizeof err))
   {
     fprintf(stderr,
             "SkyRoads data files not found (first missing: %s).\n\n"

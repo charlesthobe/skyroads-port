@@ -79,8 +79,8 @@ int main(int argc, char** argv)
     fprintf(stderr, "road 0 load failed\n");
     return 1;
   }
-  printf("demo road: %d rows, gravity %d, fuel %d rows, oxygen %d s\n",
-         road.rows, road.gravity, road.word2, road.word3);
+  printf("demo road: %d rows, gravity %d, fuel %d rows, oxygen %d s\n", road.rows, road.gravity,
+         road.word2, road.word3);
 
   sr_play* p = calloc(1, sizeof *p);
   sr_play_init(p, &road, a->demo, a->demo_size);
@@ -98,9 +98,8 @@ int main(int argc, char** argv)
     if (row >= detail_lo && row <= detail_hi)
       printf("t=%5d row=%3u.%02u x=%05x y=%04x yv=%6d xv=%4d "
              "st=%2d ac=%2d jk=%d J=%d hole=%d gnd=%d sp=%04x\n",
-             t, (unsigned)(p->z >> 16),
-             (unsigned)(((p->z & 0xffff) * 100) >> 16), p->x, p->y, p->yvel,
-             p->xvel, p->steer, p->accel, p->jumpkey, p->jumping, p->over_hole,
+             t, (unsigned)(p->z >> 16), (unsigned)(((p->z & 0xffff) * 100) >> 16), p->x, p->y,
+             p->yvel, p->xvel, p->steer, p->accel, p->jumpkey, p->jumping, p->over_hole,
              p->on_ground, (unsigned)p->speed);
     res = sr_play_tick(p);
     if (csv)
@@ -108,13 +107,12 @@ int main(int argc, char** argv)
     if (detail_lo < 0 && t % 180 == 0)
       printf("t=%5d row=%3u.%02u col x=%05x y=%04x speed=%04x "
              "fuel=%5d oxy=%5d\n",
-             t, (unsigned)(p->z >> 16),
-             (unsigned)(((p->z & 0xffff) * 100) >> 16), p->x, p->y,
+             t, (unsigned)(p->z >> 16), (unsigned)(((p->z & 0xffff) * 100) >> 16), p->x, p->y,
              (unsigned)p->speed, p->fuel, p->oxy);
   }
   if (csv)
     fclose(csv);
-  printf("\nresult after %d ticks (%.1fs): %s at row %u/%d\n", t, t / 36.0,
-         resname(res), (unsigned)(p->z >> 16), road.rows);
+  printf("\nresult after %d ticks (%.1fs): %s at row %u/%d\n", t, t / 36.0, resname(res),
+         (unsigned)(p->z >> 16), road.rows);
   return res == SR_RES_COMPLETE ? 0 : 2;
 }

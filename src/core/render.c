@@ -367,8 +367,7 @@ static void draw_shadow(sr_fb* fb, int left, int top, int clearance)
 
 /* ground support height for the shadow (fn_0b71) */
 // a height of 0 means no shadow.
-static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x,
-                                  int in_tun)
+static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x, int in_tun)
 {
   uint16_t tile = sr_tile_at(p, z, x);
   uint8_t tile_elevation = (tile >> 8) & 0xf;
@@ -400,8 +399,8 @@ static uint16_t get_shadow_height(const sr_play* p, uint32_t z, uint16_t x,
 /* ---- frame --------------------------------------------------------------
  */
 
-void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
-                     const sr_play* p, uint32_t tick, int on_sticky)
+void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a, const sr_play* p, uint32_t tick,
+                     int on_sticky)
 {
   /* full repaint from pristine (pixel-equal to restore+incremental) */
   memcpy(fb->px, r->pristine, sizeof fb->px);
@@ -432,8 +431,7 @@ void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
         pitch = 1;
     }
     static const int flame_tab[4] = {0, 1, 2, 1};
-    int flame =
-        (p->end_state == SR_RES_NO_FUEL) ? 0 : flame_tab[(tick / 2) & 3];
+    int flame = (p->end_state == SR_RES_NO_FUEL) ? 0 : flame_tab[(tick / 2) & 3];
     sprite = 14 + 9 * tilt + 3 * pitch + flame;
   }
 
@@ -472,10 +470,8 @@ void sr_render_frame(sr_render* r, sr_fb* fb, const sr_assets* a,
         draw_ship(fb, cell, left, top);
         if (!p->expl_ctr)
         {
-          uint16_t g1 =
-              get_shadow_height(p, p->z, (uint16_t)(p->x - 0x380), in_tun);
-          uint16_t g2 =
-              get_shadow_height(p, p->z, (uint16_t)(p->x + 0x380), in_tun);
+          uint16_t g1 = get_shadow_height(p, p->z, (uint16_t)(p->x - 0x380), in_tun);
+          uint16_t g2 = get_shadow_height(p, p->z, (uint16_t)(p->x + 0x380), in_tun);
           uint16_t g = g1 > g2 ? g1 : g2;
           if (g)
           {

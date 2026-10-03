@@ -2,8 +2,7 @@
 #include "tables.h"
 #include <string.h>
 
-void sr_play_init(sr_play* p, const sr_road* road, const uint8_t* demo,
-                  size_t demo_size)
+void sr_play_init(sr_play* p, const sr_road* road, const uint8_t* demo, size_t demo_size)
 {
   memset(p, 0, sizeof *p);
   p->road = road;
@@ -81,8 +80,7 @@ int sr_solid(const sr_play* p, uint32_t z, uint16_t x, uint16_t y)
   }
   if (solid_block(center, t, y))
     return 1;
-  if (solid_block(sr_tile_at(p, z, (uint16_t)(x + xoff)), (int16_t)(0x2f - t),
-                  y))
+  if (solid_block(sr_tile_at(p, z, (uint16_t)(x + xoff)), (int16_t)(0x2f - t), y))
     return 1;
   return 0;
 }
@@ -185,13 +183,10 @@ void sr_play_input(sr_play* p, const sr_input* in)
     p->jumpkey = (b >> 4) & 1;
     return;
   }
-  int right =
-      in->held[SR_KEY_RIGHT] | in->held[SR_KEY_PGUP] | in->held[SR_KEY_PGDN];
-  int left =
-      in->held[SR_KEY_LEFT] | in->held[SR_KEY_HOME] | in->held[SR_KEY_END];
+  int right = in->held[SR_KEY_RIGHT] | in->held[SR_KEY_PGUP] | in->held[SR_KEY_PGDN];
+  int left = in->held[SR_KEY_LEFT] | in->held[SR_KEY_HOME] | in->held[SR_KEY_END];
   int up = in->held[SR_KEY_UP] | in->held[SR_KEY_HOME] | in->held[SR_KEY_PGUP];
-  int down =
-      in->held[SR_KEY_DOWN] | in->held[SR_KEY_END] | in->held[SR_KEY_PGDN];
+  int down = in->held[SR_KEY_DOWN] | in->held[SR_KEY_END] | in->held[SR_KEY_PGDN];
   p->steer = (int16_t)(right - left);
   p->accel = (int16_t)(up - down);
   p->jumpkey = in->held[SR_KEY_JUMP];
@@ -239,8 +234,7 @@ static int ap_sim_lands(const sr_play* p, int32_t speed, int16_t xvel)
     if (speed > 0x2aaa)
       speed = 0x2aaa;
   }
-  return !ap_bad_cell(p, z, (uint16_t)x) &&
-         !ap_bad_cell(p, prev_z, (uint16_t)prev_x);
+  return !ap_bad_cell(p, z, (uint16_t)x) && !ap_bad_cell(p, prev_z, (uint16_t)prev_x);
 }
 
 static void autopilot(sr_play* p)
@@ -293,10 +287,7 @@ static void sfx(sr_play* p, int n)
   p->sfx_tick = p->tick;
 }
 
-static int sfx_busy(const sr_play* p) /* fn_0476, SB path */
-{
-  return p->tick < p->sfx_tick + 8;
-}
+static int sfx_busy(const sr_play* p) /* fn_0476, SB path */ { return p->tick < p->sfx_tick + 8; }
 
 /* ---- surface effects (fn_1a9c) ----------------------------------------- */
 static void surface_effects(sr_play* p, uint16_t code)
@@ -405,8 +396,8 @@ int sr_play_tick(sr_play* p)
   }
 
   /* 5. finish check */
-  if (p->z >= (((uint32_t)(rows - 1) << 16) + 0x8000) &&
-      sr_in_tunnel(p, p->z, p->x, p->y) && p->end_state == 0)
+  if (p->z >= (((uint32_t)(rows - 1) << 16) + 0x8000) && sr_in_tunnel(p, p->z, p->x, p->y) &&
+      p->end_state == 0)
   {
     p->y = 0; /* fn_0e58 fly-away */
     p->fly_ticks = 0x48;
@@ -454,8 +445,7 @@ int sr_play_tick(sr_play* p)
       {
         p->xvel = (int16_t)(p->steer * 0x1d);
       }
-      else if (p->xvel == 0 && p->yvel > 0 &&
-               (uint16_t)(p->y - p->jump_start_y) < 0xf00)
+      else if (p->xvel == 0 && p->yvel > 0 && (uint16_t)(p->y - p->jump_start_y) < 0xf00)
       {
         p->xvel = (int16_t)(p->steer * 0x1d);
       }
@@ -500,8 +490,7 @@ int sr_play_tick(sr_play* p)
   /* lateral term: speed + 0x618 normally; sticky floors LOSE the bonus
    * (EXE 0x2634: jnz -> 0, fallthrough -> 0x618) */
   int32_t eff = p->speed + (p->on_sticky ? 0 : 0x618);
-  uint16_t new_x = (uint16_t)(p->x + (int16_t)((int32_t)p->xvel * eff / 0x200) +
-                              p->side_push);
+  uint16_t new_x = (uint16_t)(p->x + (int16_t)((int32_t)p->xvel * eff / 0x200) + p->side_push);
   if ((p->x < 0x2f80 && new_x > 0xd080) || (p->x > 0xd080 && new_x < 0x2f80))
     new_x = p->x;
   uint16_t new_y = (uint16_t)(p->y + p->yvel);
@@ -557,8 +546,7 @@ int sr_play_tick(sr_play* p)
   if (p->x != new_x)
   {
     p->xvel = 0;
-    if ((p->side_push > 0 && new_x > p->x) ||
-        (p->side_push < 0 && new_x < p->x))
+    if ((p->side_push > 0 && new_x > p->x) || (p->side_push < 0 && new_x < p->x))
       p->side_push = 0;
     p->speed -= 0x97;
     if (p->speed < 0)
