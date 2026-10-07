@@ -64,6 +64,7 @@ static void start_road(sr_game* g, int entry, int demo)
     if (!seeded)
     {
       srand(time(NULL));
+      seeded = true;
     }
     int song = (rand() % (13 - 2 + 1)) + 2;
     g->want_song = song;
